@@ -1,0 +1,190 @@
+:root {
+    --blue-1: #26C6EB;
+    --blue-2: #1755EB;
+    --blue-3: #093399;
+    --blue-4: #091246;
+    --blue-5: #04081e;
+    --orange-1: #EBD500;
+    --orange-2: #c18700;
+
+    --text: #ecf0f1;
+    
+    --rbl: #00c500;
+    --ptl: #d2d200;
+    --halo: #d200d2;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 50vh;
+    margin: 0;
+    background-color: black;
+    color: var(--text);
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.toolbar {
+    display: flex;
+    gap: 20px;
+    padding: 15px;
+    background-color: var(--blue-5);
+    border: 2px solid var(--blue-4);
+    border-radius: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.toolbar-group {
+    display: flex;
+    gap: 5px;
+}
+
+.tool-btn, .action-btn {
+    background-color: var(--blue-2);
+    color: white;
+    border: none;
+    padding: 5px 20px;
+    font-size: 1em;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.tool-btn:hover, .action-btn:hover {
+    background-color: var(--blue-3);
+}
+
+.tool-btn:active, .action-btn:active {
+    transform: scale(0.95);
+}
+
+.tool-btn[data-tool="rbl"].active {
+    background-color: var(--rbl);
+    box-shadow: 0 0 10px rgb(from var(--rbl) r g b / 0.6);
+}
+
+.tool-btn[data-tool="ptl"].active {
+    background-color: var(--ptl);
+    box-shadow: 0 0 10px rgb(from var(--ptl) r g b / 0.6);
+}
+
+.tool-btn[data-tool="halo"].active {
+    background-color: var(--halo);
+    box-shadow: 0 0 10px rgb(from var(--halo) r g b / 0.6);
+}
+
+.tool-btn[data-tool="rbl"].active:hover {
+    background-color: var(--rbl);
+}
+
+.tool-btn[data-tool="ptl"].active:hover {
+    background-color: var(--ptl);
+}
+
+.tool-btn[data-tool="halo"].active:hover {
+    background-color: var(--halo);
+}
+
+.radar-container {
+    position: relative; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 30px 0;
+}
+
+#radar-screen {
+    position: relative;
+    width: 80vh;
+    height: 80vh;
+    background-color: black;
+    border: 2px solid var(--blue-3);
+    overflow: hidden;
+    box-shadow: inset 0 0 50px rgb(from var(--blue-1) r g b / 0.12);
+}
+
+.radar-lines {
+    position: absolute;
+    background-color: rgb(from var(--blue-3) r g b / 0.4);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+.radar-lines.horizontal {
+    width: 100%;
+    height: 1px;
+}
+
+.radar-lines.vertical {
+    width: 1px;
+    height: 100%;
+}
+
+#radar-scale {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 1px;
+    font-size: 0.7em;
+    color: rgb(170, 170, 170);
+}
+
+#radar-scale .scale-bar {
+    width: 100px;
+    height: 1px;
+    background-color:  rgb(170, 170, 170);
+    box-sizing: border-box;
+}
+
+#radar-scale .scale-bar .tick {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    background-color:  rgb(170, 170, 170);
+}
+
+#radar-scale .scale-bar .tick.end {
+    height: 75%; /* full height for endpoints */
+    top: 2px;
+}
+
+#radar-scale .scale-bar .tick.mid {
+    height: 50%;  /* shorter for intermediate ticks */
+    top: 4px;
+}
+
+.controls {
+    align-items: center;
+}
+
+.controls button {
+    background-color: var(--blue-2);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0 10px;
+    transition: background-color 0.3s ease;
+}
+
+.controls button:hover {
+    background-color: var(--blue-3);
+}
