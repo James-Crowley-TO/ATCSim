@@ -412,6 +412,28 @@ document.addEventListener("DOMContentLoaded", () => {
     return nmToPx(speed / 120);
   }
 
+  function projectPoint(lat, lon, heading, distanceNm) {
+    const h = heading * Math.PI / 180;
+
+    const lat2 = lat + Math.cos(h) * distanceNm;
+    const lon2 = lon + Math.sin(h) * distanceNm
+
+    return {
+      latitude: lat2,
+      longitude: lon2,
+    };
+  }
+
+  function bearingBetween(lat1, lon1, lat2, lon2) {
+    const dx = lat2 - lat1;
+    const dy = lon2 - lon1;
+    const angle = Math.round(
+      ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360
+    );
+
+    return angle;
+  }
+
   function getClosestPointOnRect(
     rectX,
     rectY,
@@ -660,7 +682,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const heading =
       overrides.heading !== undefined
         ? overrides.heading
-        : Math.floor(Math.random() * 360 + 1);
+        : (() => {
+          if (Math.random() < 0.8) {
+            const base = Math.random() < 0.5 ? 90 : 270;
+            const variation = (Math.random() - 0.5) * 30; 
+            return Math.round(base + variation)
+          }
+          return Math.floor(Math.random() * 360) + 1;;
+          })();
 
     let altitude =
       overrides.altitude !== undefined
@@ -921,8 +950,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function scenarioTraffic(n) {
-    if (currentScenario.aircraft.length === 0) {
-      console.log("No existing aircraft for traffic scenario");
+ if (currentScenario.aircraft.length === 0) {
+      console.log("No existing aircraft for conflict scenario");
       return 0;
     }
 
@@ -934,17 +963,18 @@ document.addEventListener("DOMContentLoaded", () => {
       // Pick a random existing aircraft
       const targetAircraft = randomChoice(currentScenario.aircraft).aircraftIn;
 
-      // Create aircraft 1000ft apart
-      const altDiff = Math.random() < 0.5 ? 1 : -1;
-      const newAlt = targetAircraft.altitude + altDiff;
+      // Different altitude
+      const sameAlt = targetAircraft.altitude + 1;
 
-      // Random offset position (nearby but not exactly same position)
-      const offsetDistance = nmToPx(5 + Math.random() * 3); // 5-8 NM
-      const offsetAngle = Math.random() * 360;
-      const { vx, vy } = headingToUnitVector(offsetAngle);
+      // Position nearby
+      const conflictDistance = nmToPx(8 + Math.random() * 12); // 8-20 NM away
 
-      const newLon = targetAircraft.longitude + vx * offsetDistance;
-      const newLat = targetAircraft.latitude + vy * offsetDistance;
+      // Place aircraft at distance in a direction that creates potential conflict
+      const placementAngle = (Math.random() * 90 + targetAircraft.heading) % 360;
+      const { vx, vy } = headingToUnitVector(placementAngle);
+
+      const newLon = targetAircraft.longitude + vx * conflictDistance;
+      const newLat = targetAircraft.latitude + vy * conflictDistance;
 
       // Check if within bounds
       if (
@@ -957,23 +987,33 @@ document.addEventListener("DOMContentLoaded", () => {
         continue;
       }
 
+      const conflictPoint = projectPoint(
+        targetAircraft.latitude,
+        targetAircraft.longitude,
+        targetAircraft.heading,
+        nmToPx(8 + Math.random() * 12)
+      );
+
+      const conflictHeading = bearingBetween(
+        newLat,
+        newLon,
+        conflictPoint.latitude,
+        conflictPoint.longitude
+      );
+
       const aircraft = createAircraftInstance(radarRangePx, pad, {
         longitude: newLon,
         latitude: newLat,
-        altitude: newAlt,
-        heading: Math.floor(Math.random() * 360),
+        altitude: sameAlt,
+        heading: conflictHeading,
       });
 
-      // Check if too close to any existing aircraft (except altitude, which is exactly 1000ft)
-      const tooCloseHorizontally = currentScenario.aircraft.some((a) => {
-        const dx = a.aircraftIn.longitude - aircraft.longitude;
-        const dy = a.aircraftIn.latitude - aircraft.latitude;
-        const dist = Math.hypot(dx, dy);
-        return dist < nmToPx(2); // Minimum 2 NM horizontal
-      });
-
-      if (tooCloseHorizontally) {
-        console.log(`Traffic aircraft ${i + 1} too close horizontally`);
+      // Should be far enough to not trigger immediate too-close check
+      const safe = currentScenario.aircraft.every(
+        (a) => !isTooClose(a.aircraftIn, aircraft, 3)
+      );
+      if (!safe) {
+        console.log(`Traffic aircraft ${i + 1} too close initially`);
         continue;
       }
 
@@ -1001,23 +1041,11 @@ document.addEventListener("DOMContentLoaded", () => {
       // Same altitude (conflict!)
       const sameAlt = targetAircraft.altitude;
 
-      // Position on converging course
+      // Position nearby
       const conflictDistance = nmToPx(8 + Math.random() * 12); // 8-20 NM away
 
-      // Heading that will converge with target (±30-60 degrees from direct collision)
-      const angleToTarget =
-        (Math.atan2(
-          targetAircraft.longitude - targetAircraft.longitude,
-          -(targetAircraft.latitude - targetAircraft.latitude)
-        ) *
-          180) /
-        Math.PI;
-
-      const convergenceAngle = (Math.random() - 0.5) * 20 + 10; // 10-20 degree offset
-      const conflictHeading = Math.floor(Math.random() * 360); // Random heading
-
       // Place aircraft at distance in a direction that creates potential conflict
-      const placementAngle = Math.random() * 360;
+      const placementAngle = (Math.random() * 90 + targetAircraft.heading) % 360;
       const { vx, vy } = headingToUnitVector(placementAngle);
 
       const newLon = targetAircraft.longitude + vx * conflictDistance;
@@ -1034,11 +1062,25 @@ document.addEventListener("DOMContentLoaded", () => {
         continue;
       }
 
+      const conflictPoint = projectPoint(
+        targetAircraft.latitude,
+        targetAircraft.longitude,
+        targetAircraft.heading,
+        nmToPx(8 + Math.random() * 12)
+      );
+
+      const conflictHeading = bearingBetween(
+        newLat,
+        newLon,
+        conflictPoint.latitude,
+        conflictPoint.longitude
+      );
+
       const aircraft = createAircraftInstance(radarRangePx, pad, {
         longitude: newLon,
         latitude: newLat,
         altitude: sameAlt,
-        heading: convergenceAngle,
+        heading: conflictHeading,
       });
 
       // Should be far enough to not trigger immediate too-close check
@@ -1072,7 +1114,6 @@ document.addEventListener("DOMContentLoaded", () => {
     currentScenario = { aircraft: [] };
 
     const scenarios = [
-      { type: "random", weight: 1 },
       { type: "inTrail", weight: 2 },
       { type: "traffic", weight: 1 },
       { type: "conflict", weight: 3 },
@@ -1090,12 +1131,12 @@ document.addEventListener("DOMContentLoaded", () => {
       case "medium":
         numScenarios = 2;
         minAircraft = 4;
-        maxAircraft = 7;
+        maxAircraft = 6;
         break;
       case "hard":
         numScenarios = 3;
-        minAircraft = 5;
-        maxAircraft = 10;
+        minAircraft = 8;
+        maxAircraft = 12;
         break;
     }
 
@@ -1104,11 +1145,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // First scenario must be random to have aircraft to work with
     const firstCount =
-      Math.floor(Math.random() * (maxAircraft - minAircraft + 1)) + minAircraft;
+      Math.floor(Math.random() * (maxAircraft - minAircraft + 1)) + 1;
     sequence.push({ type: "random", count: firstCount });
+    console.log(`  ${"random"}(${firstCount}) aircraft`);
 
     // Generate remaining scenarios
-    for (let i = 1; i < numScenarios; i++) {
+    for (let i = 0; i < numScenarios; i++) {
       // Weighted random selection
       const totalWeight = scenarios.reduce((sum, s) => sum + s.weight, 0);
       let rand = Math.random() * totalWeight;
@@ -1123,8 +1165,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const count =
-        Math.floor(Math.random() * (maxAircraft - minAircraft + 1)) +
-        minAircraft;
+        Math.floor(Math.random() * (maxAircraft - minAircraft + 1)) + 1;
       sequence.push({ type: selectedType, count });
     }
 
@@ -1150,6 +1191,12 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log(`  ${step.type}(${step.count}) -> placed ${placed} aircraft`);
     }
 
+    // Last scenario must be random for funsies
+    const lastCount =
+      Math.floor(Math.random() * (maxAircraft - minAircraft + 1)) + 1;
+    sequence.push({ type: "random", count: lastCount });
+    console.log(`  ${"random"}(${lastCount}) aircraft`);
+
     console.log(`Total aircraft: ${currentScenario.aircraft.length}`);
 
     // Update objectives display
@@ -1170,7 +1217,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (objectives.length === 0) {
       objectivesList.innerHTML =
-        '<div class="objective-item"><span class="objective-type">General traffic management</span></div>';
+        '<div class="objective-item"><span class="objective-type">Random Traffic</span></div>';
       return;
     }
 
@@ -1178,22 +1225,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const item = document.createElement("div");
     item.className = "objective-item";
     let displayName = "";
+    let iconClass = "";
 
     objectives.forEach((step) => {
       switch (step.type) {
         case "inTrail":
           displayName = "In Trail";
+          iconClass = "fa-solid fa-route";
           break;
         case "traffic":
-          displayName = "Traffic";
+          displayName = "Potential Traffic";
+          iconClass = "fa-solid fa-traffic-light";
           break;
         case "conflict":
-          displayName = "Conflict";
+          displayName = "Potential Conflict";
+          iconClass = "fa-solid fa-triangle-exclamation";
           break;
       }
       item.innerHTML += `
-                ${displayName}: ${step.count}\t
-            `;
+        <span class="objective">
+          <i class="${iconClass}"></i>
+          ${displayName}: ${step.count}
+        </span>
+      `;
 
       objectivesList.appendChild(item);
     });
