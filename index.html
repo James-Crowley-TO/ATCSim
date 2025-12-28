@@ -9,32 +9,42 @@
 </head>
 <body>
     <div class="container">
-        <div id="toolbar" class="toolbar">
-            <div class="toolbar-group">
-                <button id="rbl-tool" class="tool-btn" data-tool="rbl">RBL</button>
-                <button id="ptl-tool" class="tool-btn" data-tool="ptl">PTL</button>
-                <button id="halo-tool" class="tool-btn" data-tool="halo">Halo</button>
-            </div>
-            <div class="toolbar-group">
-                <button id="clear-all-ptl" class="action-btn" data-tool="clear-ptl">Clear All PTL</button>
-                <button id="clear-all-rbl" class="action-btn" data-tool="clear-rbl">Clear All RBL</button>
-                <button id="clear-all-halo" class="action-btn" data-tool="clear-halo">Clear All Halo</button>
-                <button id="clear-all-tools" class="action-btn" data-tool="clear-all">Clear All Tools</button>
-            </div>
-        </div>
-        <div class="radar-container">
-            <div id="radar-screen">
-                <div id="radar-scale">
-                    <div class="scale-bar"></div>
-                    <span class="scale-label">10 NM</span>
+        <h2>Sim</h2>
+        
+        <div class="main-layout">
+            <div id="toolbar" class="toolbar">
+                <div class="toolbar-group">
+                    <button id="rbl-tool" class="tool-btn" data-tool="rbl">RBL</button>
+                    <button id="ptl-tool" class="tool-btn" data-tool="ptl">PTL</button>
+                    <button id="halo-tool" class="tool-btn" data-tool="halo">Halo</button>
                 </div>
-                <div class="radar-lines horizontal"></div>
-                <div class="radar-lines vertical"></div>
-                <div id="aircraft-container"></div>
+                <div class="toolbar-group">
+                    <button id="clear-all-ptl" class="action-btn" data-tool="clear-ptl">Clear PTL</button>
+                    <button id="clear-all-rbl" class="action-btn" data-tool="clear-rbl">Clear RBL</button>
+                    <button id="clear-all-halo" class="action-btn" data-tool="clear-halo">Clear Halo</button>
+                    <button id="clear-all-tools" class="action-btn" data-tool="clear-all">Clear All</button>
+                </div>
+                <div class="controls">
+                    <button id="difficultyBtn" class="difficulty-toggle-btn">EASY</button>
+                    <button id="nextScenarioBtn" class="generate-btn">Generate</button>
+                </div>
             </div>
-        </div>
-        <div class="controls">
-            <button id="nextScenarioBtn">Next Scenario</button>
+            <div class="radar-container">
+                <div id="scenario-objectives" class="objectives-container">
+                    <div id="objectives-list" class="objectives-list">
+                        <!-- Objectives will be inserted here dynamically -->
+                    </div>
+                </div>
+                <div id="radar-screen">
+                    <div id="radar-scale">
+                        <div class="scale-bar"></div>
+                        <span class="scale-label">10 NM</span>
+                    </div>
+                    <div class="radar-lines horizontal"></div>
+                    <div class="radar-lines vertical"></div>
+                    <div id="aircraft-container"></div>
+                </div>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>

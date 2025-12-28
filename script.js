@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const scaleBar = document.querySelector('#radar-scale .scale-bar');
     let currentScenario = {aircraft: []};
 
+    // Difficulty state
+    let currentDifficulty = 'easy'; // 'easy', 'medium', 'hard'
+    const difficulties = ['easy', 'medium', 'hard'];
+
     // Tool state
     let selectedTool = null;
     let rblFirstPPS = null;
@@ -40,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Constants
     const minSpeed = 25;
-    const minAlt = 29
+    const minAlt = 29;
     const PX_TO_NM = 0.1;
 
     // === Aircraft type & performance maps ===
@@ -62,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "WJA",
         "MAL",
     ];
+
     // === Scale Bar ===
     function createScaleTicks(scaleBar, tickSpacing = 10) {
         scaleBar.querySelectorAll('.tick').forEach(t => t.remove());
@@ -355,7 +360,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return nm / PX_TO_NM;
     }
 
-
     function createAircraft(type, maxSpeed, maxAlt) {
         return { type, maxSpeed, maxAlt };
     }
@@ -600,26 +604,31 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.style.top = `${aircraft.latitude}px`;
     }
 
-    function createAircraftInstance(radarRangePx, pad) {
-        const modelName = randomChoice(Object.keys(aircraftTypes));
+    function createAircraftInstance(radarRangePx, pad, overrides = {}) {
+        const modelName = overrides.aircraftModel || randomChoice(Object.keys(aircraftTypes));
         const modelData = aircraftTypes[modelName];
 
-        const latitude = Math.round(Math.random() * (radarRangePx - pad * 2)) + pad;
-        const longitude = Math.round(Math.random() * (radarRangePx - pad * 2)) + pad;
+        const latitude = overrides.latitude !== undefined ? overrides.latitude : 
+            Math.round(Math.random() * (radarRangePx - pad * 2)) + pad;
+        const longitude = overrides.longitude !== undefined ? overrides.longitude :
+            Math.round(Math.random() * (radarRangePx - pad * 2)) + pad;
 
-        const heading = 
-            Math.floor(Math.random() * 360 + 1)
+        const heading = overrides.heading !== undefined ? overrides.heading :
+            Math.floor(Math.random() * 360 + 1);
         
-        let altitude = 
+        let altitude = overrides.altitude !== undefined ? overrides.altitude :
             Math.round(Math.random() * (modelData.maxAlt - minAlt - 1) + minAlt + 1);
         
-        const eastbound = heading < 180;
-        const isOdd = altitude % 2 !== 0;
+        // Apply altitude rules unless specifically overridden
+        if (overrides.altitude === undefined) {
+            const eastbound = heading < 180;
+            const isOdd = altitude % 2 !== 0;
 
-        if (eastbound && !isOdd) altitude += 1;
-        if (!eastbound && isOdd) altitude += 1;
+            if (eastbound && !isOdd) altitude += 1;
+            if (!eastbound && isOdd) altitude += 1;
+        }
 
-        const speed =
+        const speed = overrides.speed !== undefined ? overrides.speed :
             Math.round(Math.random() * (modelData.maxSpeed - minSpeed) + minSpeed);
 
         return {
@@ -705,11 +714,243 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function generateScenario(count = 1) {
+    function addAircraftToScene(aircraft) {
+        const aircraftWrapper = createAircraftWrapper(aircraft);
+        const ppsEl = createPPS(aircraftWrapper, aircraft);
+        const lineEl = createLeaderLine();
+        const tagEl = createDataTag(aircraft, aircraft.longitude, aircraft.latitude);
+
+        positionAircraft(aircraftWrapper, aircraft);
+        renderTrail(aircraftWrapper, aircraft, 4);
+        updateLeaderForAircraft(aircraft.longitude, aircraft.latitude, tagEl, lineEl);
+        enableTagDragging(tagEl, aircraft.longitude, aircraft.latitude, lineEl, 180);
+
+        currentScenario.aircraft.push({
+            aircraftIn: aircraft,
+            wrapperEl: aircraftWrapper,
+            ppsEl: ppsEl,
+            tagEl: tagEl,
+            lineEl: lineEl
+        });
+    }
+
+    // === Scenario Generation Functions ===
+    
+    function scenarioRandom(n) {
         const radarRangePx = radarScreen.getBoundingClientRect().width;
         const pad = 50;
+        let placed = 0;
 
-        // Clear previous scenario and all tools
+        for (let i = 0; i < n; i++) {
+            let aircraft;
+            let safe;
+            let attempts = 0;
+            
+            do {
+                aircraft = createAircraftInstance(radarRangePx, pad);
+                safe = currentScenario.aircraft.length === 0 || currentScenario.aircraft.every(
+                    a => !isTooClose(a.aircraftIn, aircraft)
+                );
+                attempts++;
+                if (attempts > 100) {
+                    console.warn(`Could not place aircraft ${i+1} safely in random scenario`);
+                    return placed;
+                }
+            } while (!safe);
+            
+            addAircraftToScene(aircraft);
+            placed++;
+        }
+        
+        return placed;
+    }
+
+    function scenarioInTrail(n) {
+        if (currentScenario.aircraft.length === 0) {
+            console.log('No existing aircraft for inTrail scenario');
+            return 0;
+        }
+
+        const radarRangePx = radarScreen.getBoundingClientRect().width;
+        const pad = 50;
+        let placed = 0;
+
+        for (let i = 0; i < n; i++) {
+            // Pick a random existing aircraft
+            const targetAircraft = randomChoice(currentScenario.aircraft).aircraftIn;
+            
+            // Calculate position behind or in front
+            const inFront = Math.random() < 0.5;
+            const trailDistance = nmToPx(3 + Math.random() * 7); // 3-10 NM
+            
+            const { vx, vy } = headingToUnitVector(targetAircraft.heading);
+            const direction = inFront ? 1 : -1;
+            
+            const newLon = targetAircraft.longitude + (vx * trailDistance * direction);
+            const newLat = targetAircraft.latitude + (vy * trailDistance * direction);
+            
+            // Check if within bounds
+            if (newLon < pad || newLon > radarRangePx - pad || 
+                newLat < pad || newLat > radarRangePx - pad) {
+                console.log(`Aircraft ${i+1} in trail would be out of bounds`);
+                continue;
+            }
+            
+            // Create aircraft with same heading and similar speed/altitude
+            const speedVariation = (Math.random() - 0.5) * 4; // ±2 knots
+            const altVariation = (Math.random() < 0.5 ? -2 : 2); // ±2 (even number for altitude rules)
+            
+            const aircraft = createAircraftInstance(radarRangePx, pad, {
+                longitude: newLon,
+                latitude: newLat,
+                heading: targetAircraft.heading,
+                speed: Math.round(targetAircraft.speed + speedVariation),
+                altitude: targetAircraft.altitude + altVariation,
+                aircraftModel: targetAircraft.aircraftModel
+            });
+            
+            // Check if too close to any existing aircraft
+            const safe = currentScenario.aircraft.every(a => !isTooClose(a.aircraftIn, aircraft));
+            if (!safe) {
+                console.log(`Aircraft ${i+1} in trail too close to existing aircraft`);
+                continue;
+            }
+            
+            addAircraftToScene(aircraft);
+            placed++;
+        }
+        
+        return placed;
+    }
+
+    function scenarioTraffic(n) {
+        if (currentScenario.aircraft.length === 0) {
+            console.log('No existing aircraft for traffic scenario');
+            return 0;
+        }
+
+        const radarRangePx = radarScreen.getBoundingClientRect().width;
+        const pad = 50;
+        let placed = 0;
+
+        for (let i = 0; i < n; i++) {
+            // Pick a random existing aircraft
+            const targetAircraft = randomChoice(currentScenario.aircraft).aircraftIn;
+            
+            // Create aircraft 1000ft apart
+            const altDiff = (Math.random() < 0.5) ? 1 : -1;
+            const newAlt = targetAircraft.altitude + altDiff;
+            
+            // Random offset position (nearby but not exactly same position)
+            const offsetDistance = nmToPx(5 + Math.random() * 3); // 5-8 NM
+            const offsetAngle = Math.random() * 360;
+            const { vx, vy } = headingToUnitVector(offsetAngle);
+            
+            const newLon = targetAircraft.longitude + (vx * offsetDistance);
+            const newLat = targetAircraft.latitude + (vy * offsetDistance);
+            
+            // Check if within bounds
+            if (newLon < pad || newLon > radarRangePx - pad || 
+                newLat < pad || newLat > radarRangePx - pad) {
+                console.log(`Traffic aircraft ${i+1} would be out of bounds`);
+                continue;
+            }
+            
+            const aircraft = createAircraftInstance(radarRangePx, pad, {
+                longitude: newLon,
+                latitude: newLat,
+                altitude: newAlt,
+                heading: Math.floor(Math.random() * 360)
+            });
+            
+            // Check if too close to any existing aircraft (except altitude, which is exactly 1000ft)
+            const tooCloseHorizontally = currentScenario.aircraft.some(a => {
+                const dx = a.aircraftIn.longitude - aircraft.longitude;
+                const dy = a.aircraftIn.latitude - aircraft.latitude;
+                const dist = Math.hypot(dx, dy);
+                return dist < nmToPx(2); // Minimum 2 NM horizontal
+            });
+            
+            if (tooCloseHorizontally) {
+                console.log(`Traffic aircraft ${i+1} too close horizontally`);
+                continue;
+            }
+            
+            addAircraftToScene(aircraft);
+            placed++;
+        }
+        
+        return placed;
+    }
+
+    function scenarioConflict(n) {
+        if (currentScenario.aircraft.length === 0) {
+            console.log('No existing aircraft for conflict scenario');
+            return 0;
+        }
+
+        const radarRangePx = radarScreen.getBoundingClientRect().width;
+        const pad = 50;
+        let placed = 0;
+
+        for (let i = 0; i < n; i++) {
+            // Pick a random existing aircraft
+            const targetAircraft = randomChoice(currentScenario.aircraft).aircraftIn;
+            
+            // Same altitude (conflict!)
+            const sameAlt = targetAircraft.altitude;
+            
+            // Position on converging course
+            const conflictDistance = nmToPx(8 + Math.random() * 12); // 8-20 NM away
+            
+            // Heading that will converge with target (±30-60 degrees from direct collision)
+            const angleToTarget = Math.atan2(
+                targetAircraft.longitude - targetAircraft.longitude,
+                -(targetAircraft.latitude - targetAircraft.latitude)
+            ) * 180 / Math.PI;
+            
+            const convergenceAngle = (Math.random() - 0.5) * 20 + 10; // 10-20 degree offset
+            const conflictHeading = Math.floor(Math.random() * 360); // Random heading
+            
+            // Place aircraft at distance in a direction that creates potential conflict
+            const placementAngle = Math.random() * 360;
+            const { vx, vy } = headingToUnitVector(placementAngle);
+            
+            const newLon = targetAircraft.longitude + (vx * conflictDistance);
+            const newLat = targetAircraft.latitude + (vy * conflictDistance);
+            
+            // Check if within bounds
+            if (newLon < pad || newLon > radarRangePx - pad || 
+                newLat < pad || newLat > radarRangePx - pad) {
+                console.log(`Conflict aircraft ${i+1} would be out of bounds`);
+                continue;
+            }
+            
+            const aircraft = createAircraftInstance(radarRangePx, pad, {
+                longitude: newLon,
+                latitude: newLat,
+                altitude: sameAlt,
+                heading: convergenceAngle
+            });
+            
+            // Should be far enough to not trigger immediate too-close check
+            const safe = currentScenario.aircraft.every(a => !isTooClose(a.aircraftIn, aircraft, 3));
+            if (!safe) {
+                console.log(`Conflict aircraft ${i+1} too close initially`);
+                continue;
+            }
+            
+            addAircraftToScene(aircraft);
+            placed++;
+        }
+        
+        return placed;
+    }
+
+    // === Difficulty-based Scene Generation ===
+    
+    function generateDifficultyScene(difficulty) {
+        // Clear previous scenario
         aircraftContainer.innerHTML = '';
         leaderSvg.innerHTML = '';
         toolsSvg.innerHTML = '';
@@ -720,54 +961,152 @@ document.addEventListener('DOMContentLoaded', () => {
         rblFirstPPS = null;
         currentScenario = { aircraft: [] };
 
-        for (let i = 0; i < count; i++) {
-            let aircraftIn;
-            let safe;
-            let attempts = 0;
-            
-            do {
-                aircraftIn = createAircraftInstance(radarRangePx, pad);
-                safe = currentScenario.aircraft.length === 0 || currentScenario.aircraft.every(
-                    a => !isTooClose(a.aircraftIn, aircraftIn)
-                );
-                attempts++;
-                if (attempts > 100) {
-                    console.warn('Could not place all aircraft safely, placed ' + i + ' aircraft');
-                    return;
-                }
-            } while (!safe);
-            
-            const aircraftWrapper = createAircraftWrapper(aircraftIn);
-            
-            const ppsEl = createPPS(aircraftWrapper, aircraftIn);
-            const lineEl = createLeaderLine();
-            const tagEl = createDataTag(aircraftIn, aircraftIn.longitude, aircraftIn.latitude);
+        const scenarios = [
+            { type: 'random', weight: 3 },
+            { type: 'inTrail', weight: 1 },
+            { type: 'traffic', weight: 1 },
+            { type: 'conflict', weight: 1 }
+        ];
 
-            positionAircraft(aircraftWrapper, aircraftIn);
-            renderTrail(aircraftWrapper, aircraftIn, 4);
-            updateLeaderForAircraft(aircraftIn.longitude, aircraftIn.latitude, tagEl, lineEl);
+        let numScenarios;
+        let minAircraft, maxAircraft;
 
-            enableTagDragging(tagEl, aircraftIn.longitude, aircraftIn.latitude, lineEl, 180);
-
-            currentScenario.aircraft.push({
-                aircraftIn: aircraftIn,
-                wrapperEl: aircraftWrapper,
-                ppsEl: ppsEl,
-                tagEl: tagEl,
-                lineEl: lineEl
-            });
+        switch(difficulty) {
+            case 'easy':
+                numScenarios = 1;
+                minAircraft = 3;
+                maxAircraft = 6;
+                break;
+            case 'medium':
+                numScenarios = 2;
+                minAircraft = 2;
+                maxAircraft = 5;
+                break;
+            case 'hard':
+                numScenarios = 3;
+                minAircraft = 2;
+                maxAircraft = 5;
+                break;
         }
+
+        // Generate sequence
+        const sequence = [];
         
-        console.log(`Generated ${currentScenario.aircraft.length} aircraft`);
+        // First scenario must be random to have aircraft to work with
+        const firstCount = Math.floor(Math.random() * (maxAircraft - minAircraft + 1)) + minAircraft;
+        sequence.push({ type: 'random', count: firstCount });
+
+        // Generate remaining scenarios
+        for (let i = 1; i < numScenarios; i++) {
+            // Weighted random selection
+            const totalWeight = scenarios.reduce((sum, s) => sum + s.weight, 0);
+            let rand = Math.random() * totalWeight;
+            let selectedType = 'random';
+            
+            for (const scenario of scenarios) {
+                rand -= scenario.weight;
+                if (rand <= 0) {
+                    selectedType = scenario.type;
+                    break;
+                }
+            }
+            
+            const count = Math.floor(Math.random() * (maxAircraft - minAircraft + 1)) + minAircraft;
+            sequence.push({ type: selectedType, count });
+        }
+
+        // Execute sequence
+        console.log(`Generating ${difficulty} scenario:`, sequence);
+        
+        for (const step of sequence) {
+            let placed = 0;
+            switch(step.type) {
+                case 'random':
+                    placed = scenarioRandom(step.count);
+                    break;
+                case 'inTrail':
+                    placed = scenarioInTrail(step.count);
+                    break;
+                case 'traffic':
+                    placed = scenarioTraffic(step.count);
+                    break;
+                case 'conflict':
+                    placed = scenarioConflict(step.count);
+                    break;
+            }
+            console.log(`  ${step.type}(${step.count}) -> placed ${placed} aircraft`);
+        }
+
+        console.log(`Total aircraft: ${currentScenario.aircraft.length}`);
+        
+        // Update objectives display
+        updateObjectivesDisplay(sequence);
     }
 
-    // Set up the buttons
+    function updateObjectivesDisplay(sequence) {
+        const objectivesList = document.getElementById('objectives-list');
+        objectivesList.innerHTML = '';
+        
+        // Collect all non-random scenarios
+        const objectives = [];
+        for (const step of sequence) {
+            if (step.type !== 'random') {
+                objectives.push(step);
+            }
+        }
+        
+        if (objectives.length === 0) {
+            objectivesList.innerHTML = '<div class="objective-item"><span class="objective-type">General traffic management</span></div>';
+            return;
+        }
+        
+        // Display all objectives
+        const item = document.createElement('div');
+        item.className = 'objective-item';
+        let displayName = '';
+
+        objectives.forEach(step => {
+            switch(step.type) {
+                case 'inTrail':
+                    displayName = 'In Trail';
+                    break;
+                case 'traffic':
+                    displayName = 'Traffic';
+                    break;
+                case 'conflict':
+                    displayName = 'Conflict';
+                    break;
+            }
+            item.innerHTML += `
+                ${displayName}: ${step.count}\t
+            `;
+            
+            objectivesList.appendChild(item);
+        });
+    }
+
+    // === Button Setup ===
+    
+    const difficultyBtn = document.getElementById('difficultyBtn');
+    
+    // Difficulty toggle button
+    difficultyBtn.addEventListener('click', () => {
+        // Cycle through difficulties
+        const currentIndex = difficulties.indexOf(currentDifficulty);
+        currentDifficulty = difficulties[(currentIndex + 1) % difficulties.length];
+        
+        // Update button text
+        difficultyBtn.textContent = `Difficulty: ${currentDifficulty.toUpperCase()}`;
+    });
+    
+    // Generate scenario button
     nextScenarioBtn.addEventListener('click', () => {
-        const count = Math.floor(Math.random() * 8) + 3;
-        generateScenario(count);
+        generateDifficultyScene(currentDifficulty);
     });
     
     setupToolbar();
     createScaleTicks(scaleBar);
-    generateScenario(5);
+    
+    // Initial scene
+    generateDifficultyScene(currentDifficulty);
 });
