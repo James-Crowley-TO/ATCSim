@@ -108,6 +108,25 @@ function resolveHeadingAndAltitude(modelData, overrides) {
   };
 }
 
+function climbRate(modelData, overrides) {
+  const {climb} = overrides;
+
+  if (climb !== undefined) {
+    return {climb};
+  }
+
+  const climbDirection = Math.random() < 0.5 ? -1 : 1;
+  const isClimbing = Math.random() < 0.1 ? true : false;
+
+  if (climbDirection == 1 && isClimbing) {
+    return {climb: Math.round(biasedRandom() * modelData.climb)};
+  } else if (isClimbing) {
+    return {climb: Math.round(-2 * biasedRandom() * modelData.climb)}
+  } else {
+    return {climb: 0}
+  }
+}
+
 export function createAircraftInstance(radarRangePx, pad, overrides = {}) {
   const candidates = getCompatibleAircraftModels(overrides);
   
@@ -131,6 +150,8 @@ export function createAircraftInstance(radarRangePx, pad, overrides = {}) {
   const latitude = 
     overrides.latitude ??
     Math.round(biasedRandom() * (radarRangePx - pad * 2)) + pad;
+
+  const {climb} = climbRate(modelData, overrides);
   
   return {
     id: crypto.randomUUID(),
@@ -142,6 +163,7 @@ export function createAircraftInstance(radarRangePx, pad, overrides = {}) {
     heading,
     altitude,
     speed,
+    climb,
   };
 }
 
@@ -181,7 +203,18 @@ export function createDataTag(aircraft, aircraftX, aircraftY, radarScreen) {
   const tag = document.createElement("div");
   tag.className = "data-tag";
 
-  tag.textContent = `${aircraft.callsign}\n${aircraft.altitude}  ${aircraft.speed}\n${aircraft.aircraftModel}`;
+  if (aircraft.climb == 0) {
+    tag.textContent = `${aircraft.callsign}\n${aircraft.altitude} ${aircraft.speed}\n${aircraft.aircraftModel}`;
+  } else {
+    const climbIcon =
+      aircraft.climb > 0
+        ? '<i class="fa-solid fa-arrow-up"></i>'
+        : aircraft.climb < 0
+        ? '<i class="fa-solid fa-arrow-down"></i>'
+        : '';
+    tag.innerHTML = `${aircraft.callsign}\n${aircraft.altitude}${climbIcon}${Math.abs(aircraft.climb)} ${aircraft.speed}\n${aircraft.aircraftModel}`;
+  }
+  
 
   tag.style.position = "absolute";
 
