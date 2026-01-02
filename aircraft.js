@@ -208,9 +208,9 @@ export function createDataTag(aircraft, aircraftX, aircraftY, radarScreen) {
   } else {
     const climbIcon =
       aircraft.climb > 0
-        ? '<i class="fa-solid fa-arrow-up"></i>'
+        ? '<i class="fa-solid fa-arrow-up fa-xs"></i>'
         : aircraft.climb < 0
-        ? '<i class="fa-solid fa-arrow-down"></i>'
+        ? '<i class="fa-solid fa-arrow-down fa-xs"></i>'
         : '';
     tag.innerHTML = `${aircraft.callsign}\n${aircraft.altitude}${climbIcon}${Math.abs(aircraft.climb)} ${aircraft.speed}\n${aircraft.aircraftModel}`;
   }

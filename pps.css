@@ -66,9 +66,11 @@
   font-family: monospace;
   text-align: justify;
   color: var(--text);
-  background: rgb(from var(--blue-4) r g b / 0.45);
+  background: transparent;
   border: 1px solid rgb(from var(--blue-1) r g b / 0.45);
   border-radius: 6px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.4);
   user-select: none;
   cursor: grab;
   white-space: pre;

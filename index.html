@@ -14,32 +14,34 @@
       <div class="main-layout">
         <div id="toolbar" class="toolbar">
           <div class="toolbar-group">
-            <button id="ptl-tool" class="tool-btn" data-tool="ptl">PTL</button>
-            <button id="rbl-tool" class="tool-btn" data-tool="rbl">RBL</button>
+            <button id="ptl-tool" class="tool-btn" data-tool="ptl">
+              <i class="fa-solid fa-arrow-right-long"></i>
+              <span>PTL</span>
+            </button>
+            <button id="rbl-tool" class="tool-btn" data-tool="rbl">
+              <i class="fa-solid fa-ruler-horizontal"></i>
+              <span>RBL</span>
+            </button>
             <button id="halo-tool" class="tool-btn" data-tool="halo">
-              Halo
+              <i class="fa-solid fa-circle-dot"></i>
+              <span>Halo</span>
             </button>
           </div>
           <div class="toolbar-group">
-            <button id="clear-all-ptl" class="action-btn" data-tool="clear-ptl">
-              Clear PTL
+            <button id="clear-all-ptl" class="action-btn overlay-btn" data-tool="clear-ptl">
+              <i class="fa-solid fa-arrow-right-long base-icon"></i>
+              <i class="fa-solid fa-slash overlay-icon"></i>
             </button>
-            <button id="clear-all-rbl" class="action-btn" data-tool="clear-rbl">
-              Clear RBL
+            <button id="clear-all-rbl" class="action-btn overlay-btn" data-tool="clear-rbl">
+              <i class="fa-solid fa-ruler-horizontal base-icon"></i>
+              <i class="fa-solid fa-slash overlay-icon"></i>
             </button>
-            <button
-              id="clear-all-halo"
-              class="action-btn"
-              data-tool="clear-halo"
-            >
-              Clear Halo
+            <button id="clear-all-halo" class="action-btn overlay-btn" data-tool="clear-halo">
+              <i class="fa-solid fa-circle-dot base-icon"></i>
+              <i class="fa-solid fa-slash overlay-icon"></i>
             </button>
-            <button
-              id="clear-all-tools"
-              class="action-btn"
-              data-tool="clear-all"
-            >
-              Clear All
+            <button id="clear-all-tools" class="action-btn" data-tool="clear-all">
+              <i class="fa-solid fa-eraser"></i>
             </button>
           </div>
           <div class="controls">
