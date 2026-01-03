@@ -122,3 +122,22 @@ export function setLine(lineEl, x1, y1, x2, y2) {
   lineEl.setAttribute("x2", x2);
   lineEl.setAttribute("y2", y2);
 }
+
+export function randomString(n, op) {
+  var result = '';
+  let characters;
+  switch(op) {
+    case "C": 
+      characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      break;
+    case "K": 
+      characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      break;
+  }
+  
+  var charactersLength = characters.length;
+  for ( var i = 0; i < n; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}

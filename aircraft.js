@@ -14,12 +14,35 @@ import {
   getClosestPointOnRect,
   setLine,
   biasedRandom,
+  randomString
 } from "./utils.js";
 
 export function generateCallsign() {
-  const prefix = randomChoice(CALLSIGN_OPERATORS);
-  const number = Math.floor(Math.random() * 900) + 100;
-  return `${prefix}${number}`;
+  let prefix;
+  let ident;
+  const callsignType = Math.random() < 0.1 ? "I" : "O";
+
+  switch (callsignType) {
+    case "I": 
+      if (Math.random() < 0.1) {
+        prefix = "K";
+        ident = randomString(5, "K");
+      } else {
+        prefix = "C";
+        ident = randomString(5, "C");
+      }
+      break;
+    case "O":
+      prefix = randomChoice(CALLSIGN_OPERATORS);
+      if (Math.random() < 0.1) {
+        ident = Math.floor(Math.random() * 1000) + 1000;
+      } else {
+        ident = Math.floor(Math.random() * 900) + 100;
+      }
+      break;
+  }
+  
+  return `${prefix}${ident}`;
 }
 
 export function isTooClose(a, b, minNm = 5) {
