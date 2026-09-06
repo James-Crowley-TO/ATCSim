@@ -16,8 +16,21 @@ The project is intentionally **not** a full ATC simulator. It presents a traffic
   - **RBL** — range/bearing line between two targets.
   - **Halo** — adjustable distance ring. Scroll over the target to change radius.
 - Keeps the answer hidden until **Reveal answer** is selected. The answer lists the conflicting callsigns, approximate start of loss of separation, and closest point of approach (CPA).
+- Supports cursor-centred wheel zoom, click-and-drag panning, and a one-click viewport reset.
+- Occasionally generates traffic beyond the opening viewport, with every aircraft represented in a flight-strip bay sorted by its projected centre-crossing time.
+- Draws a fictitious sector boundary in world coordinates so it remains aligned while the radar is moved.
 
 ## Separation model
+
+## Radar navigation and strips
+
+The initial view covers a fixed 76 NM square, fitted to the available display. Wheel zoom is cursor-centred; drag empty radar space to pan. Reset view (also applied on resize and new scenarios) restores the original coverage. Existing PTL/halo wheel adjustment takes priority over zoom.
+
+At most one background aircraft starts outside the initial view. Each eligible background placement has a 16% chance of being off-screen; these tracks point towards the centre and still pass conflict validation. Intentional conflict pairs remain initially visible.
+
+Strips are ordered by signed time of closest approach to the original centre, not literal passage through that point: most arbitrary tracks do not intersect it. Negative times indicate passage already occurred. Times use minutes relative to the static snapshot; panning does not change their order. The closed sector outline is fictitious and decorative, not an operational boundary.
+
+## Conflict calculation
 
 A conflict is predicted when two linearly projected tracks come within both:
 
@@ -51,11 +64,13 @@ No build step or third-party package is required.
 ## Controls
 
 1. Choose a difficulty.
-2. Select **PTL**, **RBL**, or **Halo**.
-3. Click aircraft targets to apply the selected tool. RBL requires two targets.
-4. Scroll over a target to adjust an active PTL or halo. Right-click a target to clear all tools attached to it.
-5. Select **Reveal answer** only after you have identified the conflicts.
-6. Select **New scenario** or press **N** for another exercise.
+2. Drag empty radar space to pan, use the mouse wheel to zoom around the cursor, or select **Reset view**.
+3. Scan the flight-strip bay; an aircraft listed there may initially be outside the visible area.
+4. Select **PTL**, **RBL**, or **Halo**.
+5. Click aircraft targets to apply the selected tool. RBL requires two targets.
+6. Scroll over a target to adjust an active PTL or halo. Right-click a target to clear all tools attached to it.
+7. Select **Reveal answer** only after you have identified the conflicts.
+8. Select **New scenario** or press **N** for another exercise.
 
 ## Project structure
 

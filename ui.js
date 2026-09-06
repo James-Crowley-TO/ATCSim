@@ -1,8 +1,8 @@
 import { nmToPx } from "./utils.js";
 
-export function renderRadarScale(scaleBar, scaleLabel, distanceNm = 10) {
+export function renderRadarScale(scaleBar, scaleLabel, distanceNm = 10, zoom = 1) {
   scaleBar.innerHTML = "";
-  scaleBar.style.width = `${nmToPx(distanceNm)}px`;
+  scaleBar.style.width = `${nmToPx(distanceNm) * zoom}px`;
   scaleLabel.textContent = `${distanceNm} NM`;
 
   for (let i = 0; i <= distanceNm; i += 1) {

@@ -8,9 +8,13 @@ export const VERTICAL_SEPARATION_FT = 1000;
 export const CONFLICT_SAMPLE_MINUTES = 0.05;
 
 export const HISTORY_DOTS = 4;
-export const HISTORY_INTERVAL_MINUTES = 1;
+export const HISTORY_INTERVAL_MINUTES = 0.2;
 export const DEFAULT_PTL_MINUTES = 3;
 export const DEFAULT_HALO_NM = 5;
+export const OFFSCREEN_TRAFFIC_CHANCE = 0.16;
+export const OFFSCREEN_MARGIN_RATIO = 0.42;
+export const MIN_ZOOM = 0.55;
+export const MAX_ZOOM = 2.6;
 
 // Simplified performance envelopes. They are intentionally approximate: the
 // application is a conflict-recognition exercise, not an aircraft performance model.
@@ -27,7 +31,7 @@ export const AIRCRAFT_TYPES = {
   DH8C: { minSpeedKts: 180, maxSpeedKts: 270, maxFlightLevel: 250, maxVerticalRateFpm: 1300 },
   DH8D: { minSpeedKts: 200, maxSpeedKts: 360, maxFlightLevel: 250, maxVerticalRateFpm: 2000 },
   B190: { minSpeedKts: 170, maxSpeedKts: 280, maxFlightLevel: 250, maxVerticalRateFpm: 1500 },
-  SW4:  { minSpeedKts: 160, maxSpeedKts: 260, maxFlightLevel: 250, maxVerticalRateFpm: 1200 },
+  SW4: { minSpeedKts: 160, maxSpeedKts: 260, maxFlightLevel: 250, maxVerticalRateFpm: 1200 },
   C208: { minSpeedKts: 140, maxSpeedKts: 185, maxFlightLevel: 250, maxVerticalRateFpm: 700 },
   BE9L: { minSpeedKts: 160, maxSpeedKts: 250, maxFlightLevel: 300, maxVerticalRateFpm: 1200 },
   PC12: { minSpeedKts: 180, maxSpeedKts: 285, maxFlightLevel: 300, maxVerticalRateFpm: 1200 },

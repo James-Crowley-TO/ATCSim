@@ -4,12 +4,15 @@ import {
   DIFFICULTY_CONFIG,
   FLIGHT_LEVELS,
   HORIZONTAL_SEPARATION_NM,
+  OFFSCREEN_MARGIN_RATIO,
+  OFFSCREEN_TRAFFIC_CHANCE,
   RADAR_PADDING_PX,
   VERTICAL_SEPARATION_FT,
 } from "./constants.js";
 import { createAircraft } from "./aircraft.js";
 import {
   chance,
+  bearingDegrees,
   distanceNm,
   isInsideBounds,
   normalizeHeading,
@@ -144,6 +147,17 @@ function createIntentionalPair(bounds, config, existingAircraft) {
 function createDistractor(bounds, config, existingAircraft) {
   for (let attempt = 0; attempt < DISTRACTOR_ATTEMPTS; attempt += 1) {
     const aircraft = createAircraft(bounds, RADAR_PADDING_PX);
+
+    if (!existingAircraft.some(a => !isInsideBounds(a, bounds)) && chance(OFFSCREEN_TRAFFIC_CHANCE)) {
+      const marginX = bounds.width * OFFSCREEN_MARGIN_RATIO;
+      const marginY = bounds.height * OFFSCREEN_MARGIN_RATIO;
+      const side = randomInt(0, 3);
+      if (side === 0) aircraft.x = randomBetween(-marginX, -RADAR_PADDING_PX);
+      if (side === 1) aircraft.x = randomBetween(bounds.width + RADAR_PADDING_PX, bounds.width + marginX);
+      if (side === 2) aircraft.y = randomBetween(-marginY, -RADAR_PADDING_PX);
+      if (side === 3) aircraft.y = randomBetween(bounds.height + RADAR_PADDING_PX, bounds.height + marginY);
+      aircraft.heading = bearingDegrees(aircraft, { x: bounds.width / 2, y: bounds.height / 2 });
+    }
 
     if (chance(config.verticalTrafficChance)) {
       const direction = chance(0.5) ? -1 : 1;

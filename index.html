@@ -1,92 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="A static radar scenario generator for practising air traffic conflict recognition and problem solving."
-    />
-    <title>ATC Problem-Solving Trainer</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="pps.css" />
-  </head>
-  <body>
-    <main class="app-shell">
-      <header class="app-header">
-        <div>
-          <p class="eyebrow">ATC PRACTICE</p>
-          <h1>Conflict Recognition Trainer</h1>
-        </div>
-        <div class="scenario-controls">
-          <label for="difficultySelect">Difficulty</label>
-          <select id="difficultySelect" aria-label="Scenario difficulty"></select>
-          <button id="nextScenarioBtn" class="primary-btn" type="button" title="New scenario (N)">
-            New scenario
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="A static radar scenario generator for practising air traffic conflict recognition and problem solving." />
+  <title>ATC Problem-Solving Trainer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="pps.css" />
+</head>
+
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">ATC PRACTICE</p>
+        <h1>Conflict Recognition Trainer</h1>
+      </div>
+      <div class="scenario-controls">
+        <label for="difficultySelect">Difficulty</label>
+        <select id="difficultySelect" aria-label="Scenario difficulty"></select>
+        <button id="nextScenarioBtn" class="primary-btn" type="button" title="New scenario (N)">
+          New scenario
+        </button>
+      </div>
+    </header>
+
+    <section class="briefing" aria-live="polite">
+      <div>
+        <div id="scenario-meta" class="scenario-meta"></div>
+        <p id="scenario-objective" class="scenario-objective"></p>
+      </div>
+      <button id="revealSolutionBtn" class="secondary-btn" type="button" aria-expanded="false">
+        Reveal answer
+      </button>
+    </section>
+
+    <div id="solution-panel" class="solution-panel" hidden></div>
+
+    <section class="workspace">
+      <aside id="toolbar" class="toolbar" aria-label="Radar tools">
+        <div class="tool-section">
+          <span class="tool-heading">Tools</span>
+          <button id="ptl-tool" class="tool-btn" data-tool="ptl" type="button" title="Projected track line">
+            <span class="tool-symbol">→</span><span>PTL</span>
+          </button>
+          <button id="rbl-tool" class="tool-btn" data-tool="rbl" type="button" title="Range and bearing line">
+            <span class="tool-symbol">↔</span><span>RBL</span>
+          </button>
+          <button id="halo-tool" class="tool-btn" data-tool="halo" type="button" title="Distance halo">
+            <span class="tool-symbol">○</span><span>Halo</span>
           </button>
         </div>
-      </header>
 
-      <section class="briefing" aria-live="polite">
-        <div>
-          <div id="scenario-meta" class="scenario-meta"></div>
-          <p id="scenario-objective" class="scenario-objective"></p>
+        <div class="tool-section">
+          <span class="tool-heading">Clear</span>
+          <button id="clear-all-ptl" class="action-btn" type="button">PTL</button>
+          <button id="clear-all-rbl" class="action-btn" type="button">RBL</button>
+          <button id="clear-all-halo" class="action-btn" type="button">Halo</button>
+          <button id="clear-all-tools" class="action-btn danger" type="button">All</button>
         </div>
-        <button id="revealSolutionBtn" class="secondary-btn" type="button" aria-expanded="false">
-          Reveal answer
-        </button>
-      </section>
 
-      <div id="solution-panel" class="solution-panel" hidden></div>
+        <p class="tool-help">
+          Select a tool, then click a target. RBL uses two targets. Scroll over a target to adjust its active PTL or
+          halo. Right-click a target to clear its tools.
+        </p>
+      </aside>
 
-      <section class="workspace">
-        <aside id="toolbar" class="toolbar" aria-label="Radar tools">
-          <div class="tool-section">
-            <span class="tool-heading">Tools</span>
-            <button id="ptl-tool" class="tool-btn" data-tool="ptl" type="button" title="Projected track line">
-              <span class="tool-symbol">→</span><span>PTL</span>
-            </button>
-            <button id="rbl-tool" class="tool-btn" data-tool="rbl" type="button" title="Range and bearing line">
-              <span class="tool-symbol">↔</span><span>RBL</span>
-            </button>
-            <button id="halo-tool" class="tool-btn" data-tool="halo" type="button" title="Distance halo">
-              <span class="tool-symbol">○</span><span>Halo</span>
-            </button>
-          </div>
-
-          <div class="tool-section">
-            <span class="tool-heading">Clear</span>
-            <button id="clear-all-ptl" class="action-btn" type="button">PTL</button>
-            <button id="clear-all-rbl" class="action-btn" type="button">RBL</button>
-            <button id="clear-all-halo" class="action-btn" type="button">Halo</button>
-            <button id="clear-all-tools" class="action-btn danger" type="button">All</button>
-          </div>
-
-          <p class="tool-help">
-            Select a tool, then click a target. RBL uses two targets. Scroll over a target to adjust its active PTL or halo. Right-click a target to clear its tools.
-          </p>
-        </aside>
-
-        <div class="radar-wrap">
-          <div id="radar-screen" aria-label="Radar scenario display">
+      <div class="radar-wrap">
+        <div id="radar-screen" aria-label="Radar scenario display" tabindex="0">
+          <div id="radar-world">
             <div class="radar-grid" aria-hidden="true"></div>
-            <div class="radar-cross horizontal" aria-hidden="true"></div>
-            <div class="radar-cross vertical" aria-hidden="true"></div>
-
-            <div id="radar-scale" aria-hidden="true">
-              <div class="scale-bar"></div>
-              <span class="scale-label"></span>
-            </div>
+            <svg id="airspace-layer" class="airspace-layer" width="100%" height="100%" aria-hidden="true">
+              <polygon id="airspace-boundary"></polygon>
+            </svg>
 
             <svg id="leader-layer" class="leader-layer" width="100%" height="100%" aria-hidden="true"></svg>
             <div id="aircraft-container"></div>
             <svg id="tools-layer" class="tools-layer" width="100%" height="100%" aria-hidden="true"></svg>
             <div id="tag-layer"></div>
           </div>
-        </div>
-      </section>
-    </main>
 
-    <script type="module" src="main.js"></script>
-  </body>
+          <div id="radar-scale" aria-hidden="true">
+            <div class="scale-bar"></div>
+            <span class="scale-label"></span>
+          </div>
+
+          <div class="viewport-help" aria-hidden="true">Drag to pan · Wheel to zoom</div>
+          <button id="resetViewBtn" class="reset-view" type="button" title="Reset radar view">Reset view</button>
+        </div>
+      </div>
+
+      <aside class="strip-bay" aria-label="Flight progress strips">
+        <div class="strip-bay-header">
+          <span>Flight strips</span>
+          <small>Centre crossing</small>
+        </div>
+        <div id="flight-strips"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script type="module" src="main.js"></script>
+</body>
+
 </html>

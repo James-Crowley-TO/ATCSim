@@ -140,11 +140,8 @@ export function createDataTag(aircraft, tagLayer, radarScreen) {
   tag.title = `${aircraft.callsign}: FL${aircraft.flightLevel}, ${Math.round(aircraft.speedKts)} kt, heading ${Math.round(aircraft.heading)}°`;
   tagLayer.appendChild(tag);
 
-  const radarRect = radarScreen.getBoundingClientRect();
-  const tagWidth = tag.offsetWidth || 92;
-  const tagHeight = tag.offsetHeight || 48;
-  const x = clamp(aircraft.x + 34, 8, radarRect.width - tagWidth - 8);
-  const y = clamp(aircraft.y - 24, 8, radarRect.height - tagHeight - 8);
+  const x = aircraft.x + 34;
+  const y = aircraft.y - 24;
 
   tag.style.left = `${x}px`;
   tag.style.top = `${y}px`;
@@ -163,16 +160,17 @@ export function updateLeaderForAircraft(aircraft, tag, line) {
   setSvgLine(line, anchor.x, anchor.y, edge.x, edge.y);
 }
 
-export function enableTagDragging(tag, aircraft, line, radarScreen, maxDistancePx = 180) {
+export function enableTagDragging(tag, aircraft, line, radarScreen, screenToWorld, maxDistancePx = 180) {
   let pointerId = null;
   let offsetX = 0;
   let offsetY = 0;
 
   tag.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || pointerId !== null) return;
     pointerId = event.pointerId;
-    const tagRect = tag.getBoundingClientRect();
-    offsetX = event.clientX - tagRect.left;
-    offsetY = event.clientY - tagRect.top;
+    const pointer = screenToWorld(event.clientX, event.clientY);
+    offsetX = pointer.x - parseFloat(tag.style.left);
+    offsetY = pointer.y - parseFloat(tag.style.top);
     tag.setPointerCapture(pointerId);
     tag.classList.add("dragging");
     event.preventDefault();
@@ -181,9 +179,9 @@ export function enableTagDragging(tag, aircraft, line, radarScreen, maxDistanceP
   tag.addEventListener("pointermove", (event) => {
     if (event.pointerId !== pointerId) return;
 
-    const radarRect = radarScreen.getBoundingClientRect();
-    let x = event.clientX - radarRect.left - offsetX;
-    let y = event.clientY - radarRect.top - offsetY;
+    const point = screenToWorld(event.clientX, event.clientY);
+    let x = point.x - offsetX;
+    let y = point.y - offsetY;
 
     const dx = x - aircraft.x;
     const dy = y - aircraft.y;
@@ -194,8 +192,6 @@ export function enableTagDragging(tag, aircraft, line, radarScreen, maxDistanceP
       y = aircraft.y + dy * scale;
     }
 
-    x = clamp(x, 0, radarRect.width - tag.offsetWidth);
-    y = clamp(y, 0, radarRect.height - tag.offsetHeight);
     tag.style.left = `${x}px`;
     tag.style.top = `${y}px`;
     updateLeaderForAircraft(aircraft, tag, line);
@@ -210,4 +206,5 @@ export function enableTagDragging(tag, aircraft, line, radarScreen, maxDistanceP
 
   tag.addEventListener("pointerup", stopDragging);
   tag.addEventListener("pointercancel", stopDragging);
+  tag.addEventListener("lostpointercapture", stopDragging);
 }
