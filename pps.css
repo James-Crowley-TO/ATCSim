@@ -1,145 +1,129 @@
+.aircraft {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
 .pps {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-
-    border: 2px solid var(--orange-2);
-    border-radius: 50%;
-
-    background: transparent;
-
-    transform: translate(-50%, -50%) scale(1);
-    box-sizing: border-box;
-    
-    pointer-events: auto;
-    z-index: 10;
-    cursor: pointer;
-
-    transition:
-        transform 120ms ease,
-        box-shadow 120ms ease;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  margin: 0;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid var(--amber);
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+  cursor: crosshair;
+  z-index: 10;
 }
 
-/* Optional: subtle hover emphasis */
-.pps:hover {
-    transform: translate(-50%, -50%) scale(2) !important;
-    box-shadow: 0 0 6px rgb(from var(--orange-2) r g b / 0.8);
+.pps::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
 }
 
-/* RBL selection indicator */
+.pps:hover,
+.pps:focus-visible {
+  box-shadow: 0 0 0 3px rgba(213, 169, 54, 0.18), 0 0 9px rgba(213, 169, 54, 0.65);
+}
+
 .pps.rbl-selected {
-    box-shadow: 0 0 12px rgb(from #00ff00 r g b / 0.9);
-    border-color: #00ff00;
+  border-color: var(--rbl);
+  box-shadow: 0 0 0 4px rgba(101, 208, 110, 0.22);
 }
 
-/* Small history dots */
 .trail-dot {
   position: absolute;
-  width: 2px;
-  height: 2px;
-  background-color: var(--orange-2);
-  border-radius: 50%;
+  width: 3px;
+  height: 3px;
   transform: translate(-50%, -50%);
-  opacity: 0.7;
-  pointer-events: none; /* don't steal hover from the main PPS */
-  z-index: 5;
+  border-radius: 50%;
+  background: var(--amber);
+  opacity: 0.72;
+  pointer-events: none;
 }
 
-.aircraft {
-  pointer-events: none !important; /* CRITICAL: Allow PPS to receive events */
-  z-index: 5;
-}
-
-#aircraft-container {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none; /* Let children handle pointer events */
-}
-
-/* Data tag box */
 .data-tag {
   position: absolute;
-  pointer-events: auto;
+  min-width: 82px;
+  padding: 4px 6px;
+  color: #bfe9f5;
+  background: rgba(4, 18, 28, 0.74);
+  border: 1px solid rgba(66, 200, 233, 0.28);
+  border-radius: 4px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 11px;
-  padding: 5px;
-  font-family: monospace;
-  text-align: justify;
-  color: var(--text);
-  background: transparent;
-  border: 1px solid rgb(from var(--blue-1) r g b / 0.45);
-  border-radius: 6px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 8px 20px rgb(0 0 0 / 0.4);
+  line-height: 1.22;
+  white-space: pre;
+  text-align: left;
   user-select: none;
   cursor: grab;
-  white-space: pre;
-  z-index: 20;
+  pointer-events: auto;
+  touch-action: none;
 }
 
-.data-tag:active {
+.data-tag.dragging {
   cursor: grabbing;
-}
-
-/* Leader line: we draw it with an SVG polyline */
-.leader-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none; /* don't block mouse interactions */
-  z-index: 1;
+  border-color: rgba(66, 200, 233, 0.7);
 }
 
 .leader-line {
-  stroke: rgb(from var(--blue-1) r g b / 0.65);
-  stroke-width: 1.5;
-  fill: none;
+  stroke: rgba(66, 200, 233, 0.55);
+  stroke-width: 1;
 }
 
-/* Tools layer */
-.tools-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 15;
+.rbl-line,
+.ptl-line,
+.halo-circle {
+  pointer-events: stroke;
+  cursor: pointer;
 }
 
-/* Tool styling */
 .rbl-line {
   stroke: var(--rbl);
-  stroke-width: 2;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.rbl-label {
-  fill: var(--rbl);
-  font-size: 12px;
-  pointer-events: none;
-  text-anchor: middle;
+  stroke-width: 1.7;
 }
 
 .ptl-line {
   stroke: var(--ptl);
-  stroke-width: 2;
-  cursor: pointer;
-  pointer-events: auto;
+  stroke-width: 1.7;
+}
+
+.halo-circle {
+  fill: none;
+  stroke: var(--halo);
+  stroke-width: 1.5;
+}
+
+.rbl-label,
+.ptl-label,
+.halo-label {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--radar);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.rbl-label {
+  fill: var(--rbl);
 }
 
 .ptl-label {
   fill: var(--ptl);
-  font-size: 12px;
-  pointer-events: none;
-  text-anchor: middle;
-}
-
-.halo-circle {
-  stroke: var(--halo);
-  stroke-width: 2;
-  fill: none;
 }
 
 .halo-label {
   fill: var(--halo);
-  font-size: 12px;
-  pointer-events: none;
 }
-

@@ -1,67 +1,66 @@
-// UI utilities and helpers
+import { nmToPx } from "./utils.js";
 
-export function createScaleTicks(scaleBar, tickSpacing = 10) {
-  scaleBar.querySelectorAll(".tick").forEach((t) => t.remove());
-  const barWidth = scaleBar.offsetWidth;
+export function renderRadarScale(scaleBar, scaleLabel, distanceNm = 10) {
+  scaleBar.innerHTML = "";
+  scaleBar.style.width = `${nmToPx(distanceNm)}px`;
+  scaleLabel.textContent = `${distanceNm} NM`;
 
-  // Add left endpoint
-  const leftTick = document.createElement("div");
-  leftTick.className = "tick end";
-  leftTick.style.left = `0px`;
-  scaleBar.appendChild(leftTick);
-
-  // Add right endpoint
-  const rightTick = document.createElement("div");
-  rightTick.className = "tick end";
-  rightTick.style.left = `${barWidth - 1}px`; // -1 to stay inside the bar
-  scaleBar.appendChild(rightTick);
-
-  // Add intermediate ticks
-  for (let x = tickSpacing; x < barWidth - 1; x += tickSpacing) {
-    const tick = document.createElement("div");
-    tick.className = "tick mid";
-    tick.style.left = `${x}px`;
+  for (let i = 0; i <= distanceNm; i += 1) {
+    const tick = document.createElement("span");
+    tick.className = i === 0 || i === distanceNm ? "scale-tick end" : "scale-tick";
+    tick.style.left = `${(i / distanceNm) * 100}%`;
     scaleBar.appendChild(tick);
   }
 }
 
-export function updateObjectivesDisplay(sequence) {
-  const objectivesList = document.getElementById("objectives-list");
-  objectivesList.innerHTML = "";
+export function renderScenarioBriefing(scenario) {
+  document.getElementById("scenario-meta").textContent =
+    `${scenario.difficulty.toUpperCase()} · ${scenario.aircraft.length} aircraft · ${scenario.lookaheadMinutes} min look-ahead`;
 
-  // Collect all non-random scenarios
-  const objectives = [];
-  for (const step of sequence) {
-    if (step.type !== "random") {
-      objectives.push(step);
-    }
-  }
+  document.getElementById("scenario-objective").textContent =
+    `Identify every pair predicted to lose ${scenario.separation.horizontalNm} NM / ` +
+    `${scenario.separation.verticalFt.toLocaleString()} ft separation. Use the radar tools before revealing the answer.`;
+}
 
-  if (objectives.length === 0) {
-    objectivesList.innerHTML =
-      '<div class="objective-item"><span class="objective-type">Random Traffic</span></div>';
+export function hideSolution() {
+  const panel = document.getElementById("solution-panel");
+  const button = document.getElementById("revealSolutionBtn");
+  panel.hidden = true;
+  panel.innerHTML = "";
+  button.textContent = "Reveal answer";
+  button.setAttribute("aria-expanded", "false");
+}
+
+export function toggleSolution(scenario) {
+  const panel = document.getElementById("solution-panel");
+  const button = document.getElementById("revealSolutionBtn");
+
+  if (!panel.hidden) {
+    hideSolution();
     return;
   }
 
-  // Display all objectives
-  const item = document.createElement("div");
-  item.className = "objective-item";
-  let displayName = "";
-  let iconClass = "";
+  const heading = document.createElement("strong");
+  heading.textContent = `${scenario.conflicts.length} predicted conflict${scenario.conflicts.length === 1 ? "" : "s"}`;
+  panel.appendChild(heading);
 
-  objectives.forEach((step) => {
-    switch (step.type) {
-      case "conflict":
-        displayName = "Potential Conflict";
-        iconClass = "fa-solid fa-triangle-exclamation";
-        break;
-    }
-    item.innerHTML += `
-      <span class="objective">
-        <i class="${iconClass}"></i>
-        ${displayName}
-      </span>
-    `;
-  });
-  objectivesList.appendChild(item);
+  const list = document.createElement("ol");
+  for (const conflict of scenario.conflicts) {
+    const item = document.createElement("li");
+    item.textContent =
+      `${conflict.aircraftA.callsign} / ${conflict.aircraftB.callsign}: ` +
+      `loss begins in ~${conflict.firstLossMinutes} min; ` +
+      `CPA ${conflict.cpaHorizontalNm} NM / ${conflict.cpaVerticalFt.toLocaleString()} ft at ~${conflict.cpaMinutes} min.`;
+    list.appendChild(item);
+  }
+  panel.appendChild(list);
+  panel.hidden = false;
+  button.textContent = "Hide answer";
+  button.setAttribute("aria-expanded", "true");
+}
+
+export function showGenerationError(message) {
+  document.getElementById("scenario-meta").textContent = "SCENARIO GENERATION ERROR";
+  document.getElementById("scenario-objective").textContent = message;
+  hideSolution();
 }

@@ -3,72 +3,90 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ATC Trainer</title>
-    <link rel="stylesheet" href="pps.css" />
+    <meta
+      name="description"
+      content="A static radar scenario generator for practising air traffic conflict recognition and problem solving."
+    />
+    <title>ATC Problem-Solving Trainer</title>
     <link rel="stylesheet" href="style.css" />
-    <script src="https://kit.fontawesome.com/1f19fa1f17.js" crossorigin="anonymous"></script>
-
+    <link rel="stylesheet" href="pps.css" />
   </head>
   <body>
-    <div class="container">
-      <div class="main-layout">
-        <div id="toolbar" class="toolbar">
-          <div class="toolbar-group">
-            <button id="ptl-tool" class="tool-btn" data-tool="ptl">
-              <i class="fa-solid fa-arrow-right-long"></i>
-              <span>PTL</span>
-            </button>
-            <button id="rbl-tool" class="tool-btn" data-tool="rbl">
-              <i class="fa-solid fa-ruler-horizontal"></i>
-              <span>RBL</span>
-            </button>
-            <button id="halo-tool" class="tool-btn" data-tool="halo">
-              <i class="fa-solid fa-circle-dot"></i>
-              <span>Halo</span>
-            </button>
-          </div>
-          <div class="toolbar-group">
-            <button id="clear-all-ptl" class="action-btn overlay-btn" data-tool="clear-ptl">
-              <i class="fa-solid fa-arrow-right-long base-icon"></i>
-              <i class="fa-solid fa-slash overlay-icon"></i>
-            </button>
-            <button id="clear-all-rbl" class="action-btn overlay-btn" data-tool="clear-rbl">
-              <i class="fa-solid fa-ruler-horizontal base-icon"></i>
-              <i class="fa-solid fa-slash overlay-icon"></i>
-            </button>
-            <button id="clear-all-halo" class="action-btn overlay-btn" data-tool="clear-halo">
-              <i class="fa-solid fa-circle-dot base-icon"></i>
-              <i class="fa-solid fa-slash overlay-icon"></i>
-            </button>
-            <button id="clear-all-tools" class="action-btn" data-tool="clear-all">
-              <i class="fa-solid fa-eraser"></i>
-            </button>
-          </div>
-          <div class="controls">
-            <button id="difficultyBtn" class="difficulty-toggle-btn">
-              EASY
-            </button>
-            <button id="nextScenarioBtn" class="generate-btn"><i class="fa-solid fa-plane-departure"></i></i></button>
-          </div>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">ATC PRACTICE</p>
+          <h1>Conflict Recognition Trainer</h1>
         </div>
-        <div class="radar-container">
-          <div id="scenario-objectives" class="objectives-container">
-            <div id="objectives-list" class="objectives-list">
-              <!-- Objectives will be inserted here dynamically -->
-            </div>
+        <div class="scenario-controls">
+          <label for="difficultySelect">Difficulty</label>
+          <select id="difficultySelect" aria-label="Scenario difficulty"></select>
+          <button id="nextScenarioBtn" class="primary-btn" type="button" title="New scenario (N)">
+            New scenario
+          </button>
+        </div>
+      </header>
+
+      <section class="briefing" aria-live="polite">
+        <div>
+          <div id="scenario-meta" class="scenario-meta"></div>
+          <p id="scenario-objective" class="scenario-objective"></p>
+        </div>
+        <button id="revealSolutionBtn" class="secondary-btn" type="button" aria-expanded="false">
+          Reveal answer
+        </button>
+      </section>
+
+      <div id="solution-panel" class="solution-panel" hidden></div>
+
+      <section class="workspace">
+        <aside id="toolbar" class="toolbar" aria-label="Radar tools">
+          <div class="tool-section">
+            <span class="tool-heading">Tools</span>
+            <button id="ptl-tool" class="tool-btn" data-tool="ptl" type="button" title="Projected track line">
+              <span class="tool-symbol">→</span><span>PTL</span>
+            </button>
+            <button id="rbl-tool" class="tool-btn" data-tool="rbl" type="button" title="Range and bearing line">
+              <span class="tool-symbol">↔</span><span>RBL</span>
+            </button>
+            <button id="halo-tool" class="tool-btn" data-tool="halo" type="button" title="Distance halo">
+              <span class="tool-symbol">○</span><span>Halo</span>
+            </button>
           </div>
-          <div id="radar-screen">
-            <div id="radar-scale">
+
+          <div class="tool-section">
+            <span class="tool-heading">Clear</span>
+            <button id="clear-all-ptl" class="action-btn" type="button">PTL</button>
+            <button id="clear-all-rbl" class="action-btn" type="button">RBL</button>
+            <button id="clear-all-halo" class="action-btn" type="button">Halo</button>
+            <button id="clear-all-tools" class="action-btn danger" type="button">All</button>
+          </div>
+
+          <p class="tool-help">
+            Select a tool, then click a target. RBL uses two targets. Scroll over a target to adjust its active PTL or halo. Right-click a target to clear its tools.
+          </p>
+        </aside>
+
+        <div class="radar-wrap">
+          <div id="radar-screen" aria-label="Radar scenario display">
+            <div class="radar-grid" aria-hidden="true"></div>
+            <div class="radar-cross horizontal" aria-hidden="true"></div>
+            <div class="radar-cross vertical" aria-hidden="true"></div>
+
+            <div id="radar-scale" aria-hidden="true">
               <div class="scale-bar"></div>
-              <span class="scale-label">10 NM</span>
+              <span class="scale-label"></span>
             </div>
-            <div class="radar-lines horizontal"></div>
-            <div class="radar-lines vertical"></div>
+
+            <svg id="leader-layer" class="leader-layer" width="100%" height="100%" aria-hidden="true"></svg>
             <div id="aircraft-container"></div>
+            <svg id="tools-layer" class="tools-layer" width="100%" height="100%" aria-hidden="true"></svg>
+            <div id="tag-layer"></div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
+
     <script type="module" src="main.js"></script>
   </body>
 </html>

@@ -1,133 +1,222 @@
-// Scenario generation functions
 import {
-  createAircraftInstance,
-  isTooClose,
-} from "./aircraft.js";
-import { 
-  nmToPx, 
-  biasedRandom 
+  AIRCRAFT_TYPES,
+  CONFLICT_SAMPLE_MINUTES,
+  DIFFICULTY_CONFIG,
+  FLIGHT_LEVELS,
+  HORIZONTAL_SEPARATION_NM,
+  RADAR_PADDING_PX,
+  VERTICAL_SEPARATION_FT,
+} from "./constants.js";
+import { createAircraft } from "./aircraft.js";
+import {
+  chance,
+  distanceNm,
+  isInsideBounds,
+  normalizeHeading,
+  projectPoint,
+  randomBetween,
+  randomChoice,
+  randomInt,
+  randomStep,
+  round,
 } from "./utils.js";
 
-export function scenarioRandom(n, radarRangePx, currentScenario, addAircraftToScene) {
-  const pad = 50;
-  let placed = 0;
+const PAIR_ATTEMPTS = 300;
+const DISTRACTOR_ATTEMPTS = 1200;
+const SCENARIO_ATTEMPTS = 30;
 
-  for (let i = 0; i < n; i++) {
-    let aircraft;
-    let safe;
-    let attempts = 0;
-
-    do {
-      aircraft = createAircraftInstance(radarRangePx, pad);
-      safe =
-        currentScenario.aircraft.length === 0 ||
-        currentScenario.aircraft.every(
-          (a) => !isTooClose(a.aircraftIn, aircraft)
-        );
-      attempts++;
-      if (attempts > 100) {
-        console.warn(
-          `Could not place aircraft ${i + 1} safely in random scenario`
-        );
-        return placed;
-      }
-    } while (!safe);
-
-    addAircraftToScene(aircraft);
-    placed++;
-  }
-
-  return placed;
+function altitudeFeetAt(aircraft, minutes) {
+  return aircraft.flightLevel * 100 + aircraft.verticalRateFpm * minutes;
 }
 
-export function scenarioConflict(n, radarRangePx, addAircraftToScene) {
-  const pad = 50;
-  let placed = 0;
+export function predictConflict(a, b, lookaheadMinutes) {
+  let firstLossTime = null;
+  let best = {
+    horizontalNm: Infinity,
+    verticalFt: Infinity,
+    timeMinutes: 0,
+  };
 
-  while (true) {
-    try {
-      for (let i = 0; i < n; i++) {
+  for (let time = 0; time <= lookaheadMinutes + 1e-9; time += CONFLICT_SAMPLE_MINUTES) {
+    const pointA = projectPoint(a.x, a.y, a.heading, a.speedKts, time);
+    const pointB = projectPoint(b.x, b.y, b.heading, b.speedKts, time);
+    const horizontalNm = distanceNm(pointA, pointB);
+    const verticalFt = Math.abs(altitudeFeetAt(a, time) - altitudeFeetAt(b, time));
 
-        // Time until conflict in minutes
-        const timeOfConflict = Math.random() * 5 + 1; 
+    if (horizontalNm < best.horizontalNm) {
+      best = { horizontalNm, verticalFt, timeMinutes: time };
+    }
 
-        // Pick a random place for the conflict in pxls
-        const conflictLon = Math.round(biasedRandom() * radarRangePx);
-        const conflictLat = Math.round(biasedRandom() * radarRangePx);
-
-        // Generate both aircraft's bearing, heading and speed
-        const bearing_A = Math.round(Math.random() * 360);
-        let bearing_B = Math.round(Math.random() * 180 + (bearing_A > 180 ? 180 : 0));
-        
-        // Place them in trail if within 15 degrees
-        if (Math.abs(bearing_B - bearing_A) < 15) {
-          bearing_B = bearing_A;
-        } 
-        
-        const heading_A = (bearing_A + 180) % 360;
-        const heading_B = (bearing_B + 180) % 360;
-
-        // Speed in 10's of knts
-        const speed_A = Math.round(Math.random() * 20 + 25);
-        const speed_B = Math.round(Math.random() * 20 + 25);
-
-        // Generate the effective speed of B given 5nm constraint
-        const c = 
-          (30/timeOfConflict)**2 - (speed_A * Math.sin(Math.PI / 180 * (bearing_A - bearing_B))) ** 2;
-        const L = speed_A * Math.cos(Math.PI / 180 * (bearing_A - bearing_B)) - Math.sqrt(c);
-        const U = L + 2 * Math.sqrt(c);
-
-        const speed_B_eff = c > 0 ? ((speed_B < L || speed_B > U) ? speed_B : Math.ceil(U)) : speed_B;
-
-        // The distance of each plane to the conflict in pxls
-        const distance_A = Math.round(nmToPx(speed_A / 6  * timeOfConflict));
-        const distance_B = Math.round(nmToPx(speed_B_eff / 6  * timeOfConflict));
-
-        const toScreenRad = (deg) => (deg - 90) * Math.PI / 180
-
-        // The lat/lon of each plane in pxls (range*bearing from conflict point + location of conflict point)
-        const lon_A = conflictLon + distance_A * Math.cos(toScreenRad(bearing_A));
-        const lat_A = conflictLat + distance_A * Math.sin(toScreenRad(bearing_A));
-        const lon_B = conflictLon + distance_B * Math.cos(toScreenRad(bearing_B));
-        const lat_B = conflictLat + distance_B * Math.sin(toScreenRad(bearing_B));
-
-        // Check if within bounds
-        if (
-          lon_A < pad ||
-          lon_A > radarRangePx - pad ||
-          lat_A < pad ||
-          lat_A > radarRangePx - pad ||
-          lon_B < pad ||
-          lon_B > radarRangePx - pad ||
-          lat_B < pad ||
-          lat_B > radarRangePx - pad
-        ) {
-          throw new Error(`Conflicting aircraft would be out of bounds`);
-        }
-
-        const aircraftAIn = createAircraftInstance(radarRangePx, pad, {
-          longitude: lon_A,
-          latitude: lat_A,
-          heading: heading_A,
-          speed: speed_A,
-        });
-
-        const aircraftBIn = createAircraftInstance(radarRangePx, pad, {
-          longitude: lon_B,
-          latitude: lat_B,
-          heading: heading_B,
-          speed: speed_B_eff,
-          altitude: aircraftAIn.altitude,
-        });
-
-        addAircraftToScene(aircraftAIn);
-        addAircraftToScene(aircraftBIn);
-        placed += 2;
-        console.log(placed)
-        return placed;
-      }
-    } catch(err) {
-      console.warn("Retrying");
+    if (
+      firstLossTime === null &&
+      horizontalNm < HORIZONTAL_SEPARATION_NM &&
+      verticalFt < VERTICAL_SEPARATION_FT
+    ) {
+      firstLossTime = time;
     }
   }
+
+  return {
+    willConflict: firstLossTime !== null,
+    firstLossMinutes: firstLossTime === null ? null : round(firstLossTime, 1),
+    cpaMinutes: round(best.timeMinutes, 1),
+    cpaHorizontalNm: round(best.horizontalNm, 1),
+    cpaVerticalFt: Math.round(best.verticalFt / 100) * 100,
+  };
+}
+
+export function findPredictedConflicts(aircraft, lookaheadMinutes) {
+  const conflicts = [];
+  for (let i = 0; i < aircraft.length; i += 1) {
+    for (let j = i + 1; j < aircraft.length; j += 1) {
+      const prediction = predictConflict(aircraft[i], aircraft[j], lookaheadMinutes);
+      if (prediction.willConflict) {
+        conflicts.push({
+          aircraftA: aircraft[i],
+          aircraftB: aircraft[j],
+          ...prediction,
+        });
+      }
+    }
+  }
+  return conflicts.sort((a, b) => a.firstLossMinutes - b.firstLossMinutes);
+}
+
+function pairKey(a, b) {
+  return [a.id, b.id].sort().join("|");
+}
+
+function hasConflictWithAny(candidate, existing, lookaheadMinutes) {
+  return existing.some((other) => predictConflict(candidate, other, lookaheadMinutes).willConflict);
+}
+
+function chooseConflictFlightLevel() {
+  // High enough to resemble an en-route display while still allowing regional aircraft.
+  return randomChoice(FLIGHT_LEVELS.filter((level) => level >= 240 && level <= 390));
+}
+
+function createIntentionalPair(bounds, config, existingAircraft) {
+  for (let attempt = 0; attempt < PAIR_ATTEMPTS; attempt += 1) {
+    const timeToConflict = randomStep(config.conflictTimeRange[0], config.conflictTimeRange[1], 0.5);
+    const headingA = randomBetween(0, 360);
+    const crossingAngle = randomBetween(config.crossingAngleRange[0], config.crossingAngleRange[1]);
+    const headingB = normalizeHeading(headingA + (chance(0.5) ? crossingAngle : -crossingAngle));
+    const flightLevel = chooseConflictFlightLevel();
+
+    const aircraftA = createAircraft(bounds, RADAR_PADDING_PX, {
+      flightLevel,
+      heading: headingA,
+      verticalRateFpm: 0,
+    });
+    const aircraftB = createAircraft(bounds, RADAR_PADDING_PX, {
+      flightLevel,
+      heading: headingB,
+      verticalRateFpm: 0,
+    });
+
+    const conflictPoint = {
+      x: randomBetween(RADAR_PADDING_PX + 40, bounds.width - RADAR_PADDING_PX - 40),
+      y: randomBetween(RADAR_PADDING_PX + 40, bounds.height - RADAR_PADDING_PX - 40),
+    };
+
+    const futureA = projectPoint(0, 0, aircraftA.heading, aircraftA.speedKts, timeToConflict);
+    const futureB = projectPoint(0, 0, aircraftB.heading, aircraftB.speedKts, timeToConflict);
+    aircraftA.x = conflictPoint.x - futureA.x;
+    aircraftA.y = conflictPoint.y - futureA.y;
+    aircraftB.x = conflictPoint.x - futureB.x;
+    aircraftB.y = conflictPoint.y - futureB.y;
+
+    if (!isInsideBounds(aircraftA, bounds, RADAR_PADDING_PX)) continue;
+    if (!isInsideBounds(aircraftB, bounds, RADAR_PADDING_PX)) continue;
+    if (distanceNm(aircraftA, aircraftB) < HORIZONTAL_SEPARATION_NM + 2) continue;
+
+    const plannedPrediction = predictConflict(aircraftA, aircraftB, config.lookaheadMinutes);
+    if (!plannedPrediction.willConflict) continue;
+    if (hasConflictWithAny(aircraftA, existingAircraft, config.lookaheadMinutes)) continue;
+    if (hasConflictWithAny(aircraftB, existingAircraft, config.lookaheadMinutes)) continue;
+
+    return [aircraftA, aircraftB];
+  }
+
+  throw new Error("Unable to place an intentional conflict pair within the radar bounds");
+}
+
+function createDistractor(bounds, config, existingAircraft) {
+  for (let attempt = 0; attempt < DISTRACTOR_ATTEMPTS; attempt += 1) {
+    const aircraft = createAircraft(bounds, RADAR_PADDING_PX);
+
+    if (chance(config.verticalTrafficChance)) {
+      const direction = chance(0.5) ? -1 : 1;
+      const maxRate = AIRCRAFT_TYPES[aircraft.aircraftType].maxVerticalRateFpm;
+      const rates = [500, 1000, 1500].filter((rate) => rate <= maxRate);
+      aircraft.verticalRateFpm = direction * randomChoice(rates);
+    } else {
+      aircraft.verticalRateFpm = 0;
+    }
+
+    const tooCloseNow = existingAircraft.some(
+      (other) => distanceNm(aircraft, other) < HORIZONTAL_SEPARATION_NM + 1 &&
+        Math.abs(aircraft.flightLevel - other.flightLevel) < 10
+    );
+    if (tooCloseNow) continue;
+    if (hasConflictWithAny(aircraft, existingAircraft, config.lookaheadMinutes)) continue;
+
+    return aircraft;
+  }
+
+  throw new Error("Unable to place non-conflicting background traffic");
+}
+
+function validateScenario(aircraft, intentionalPairs, config) {
+  const predicted = findPredictedConflicts(aircraft, config.lookaheadMinutes);
+  if (predicted.length !== intentionalPairs.length) return null;
+
+  const predictedKeys = new Set(predicted.map((conflict) => pairKey(conflict.aircraftA, conflict.aircraftB)));
+  const intentionalKeys = intentionalPairs.map(([a, b]) => pairKey(a, b));
+  if (!intentionalKeys.every((key) => predictedKeys.has(key))) return null;
+  return predicted;
+}
+
+export function generateScenario(difficulty, bounds) {
+  const config = DIFFICULTY_CONFIG[difficulty];
+  if (!config) throw new Error(`Unsupported difficulty: ${difficulty}`);
+  if (bounds.width <= RADAR_PADDING_PX * 2 || bounds.height <= RADAR_PADDING_PX * 2) {
+    throw new Error("Radar display is too small to generate a scenario");
+  }
+
+  for (let scenarioAttempt = 0; scenarioAttempt < SCENARIO_ATTEMPTS; scenarioAttempt += 1) {
+    try {
+      const aircraft = [];
+      const intentionalPairs = [];
+
+      for (let i = 0; i < config.conflictPairs; i += 1) {
+        const pair = createIntentionalPair(bounds, config, aircraft);
+        aircraft.push(...pair);
+        intentionalPairs.push(pair);
+      }
+
+      const targetAircraft = randomInt(config.aircraftRange[0], config.aircraftRange[1]);
+      while (aircraft.length < targetAircraft) {
+        aircraft.push(createDistractor(bounds, config, aircraft));
+      }
+
+      const conflicts = validateScenario(aircraft, intentionalPairs, config);
+      if (!conflicts) continue;
+
+      return {
+        difficulty,
+        aircraft,
+        conflicts,
+        lookaheadMinutes: config.lookaheadMinutes,
+        separation: {
+          horizontalNm: HORIZONTAL_SEPARATION_NM,
+          verticalFt: VERTICAL_SEPARATION_FT,
+        },
+      };
+    } catch {
+      // Retry the whole scene. All retry loops are bounded, so generation cannot hang.
+    }
+  }
+
+  throw new Error(`Could not generate a valid ${difficulty} scenario after ${SCENARIO_ATTEMPTS} attempts`);
 }

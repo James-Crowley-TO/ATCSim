@@ -1,218 +1,121 @@
-// Aircraft creation and management
 import {
   AIRCRAFT_TYPES,
   CALLSIGN_OPERATORS,
-  MIN_SPEED,
-  MIN_ALT,
+  FLIGHT_LEVELS,
+  HISTORY_INTERVAL_MINUTES,
 } from "./constants.js";
 import {
-  randomChoice,
   clamp,
-  headingToUnitVector,
-  speedToTrailSpacingPx,
-  nmToPx,
+  createId,
   getClosestPointOnRect,
-  setLine,
-  biasedRandom,
-  randomString
+  headingToUnitVector,
+  nmToPx,
+  normalizeHeading,
+  randomBetween,
+  randomChoice,
+  randomInt,
+  randomLetters,
+  setSvgLine,
 } from "./utils.js";
 
-export function generateCallsign() {
-  let prefix;
-  let ident;
-  const callsignType = Math.random() < 0.1 ? "I" : "O";
-
-  switch (callsignType) {
-    case "I": 
-      if (Math.random() < 0.1) {
-        prefix = "K";
-        ident = randomString(5, "K");
-      } else {
-        prefix = "C";
-        ident = randomString(5, "C");
-      }
-      break;
-    case "O":
-      prefix = randomChoice(CALLSIGN_OPERATORS);
-      if (Math.random() < 0.1) {
-        ident = Math.floor(Math.random() * 1000) + 1000;
-      } else {
-        ident = Math.floor(Math.random() * 900) + 100;
-      }
-      break;
+function generateRegistration() {
+  if (Math.random() < 0.7) {
+    return `C${randomChoice(["F", "G"])}${randomLetters(3)}`;
   }
-  
-  return `${prefix}${ident}`;
+
+  const digits = randomInt(1, 999).toString();
+  const suffix = Math.random() < 0.55 ? randomLetters(randomInt(1, 2)) : "";
+  return `N${digits}${suffix}`;
 }
 
-export function isTooClose(a, b, minNm = 5) {
-  const dx = a.longitude - b.longitude;
-  const dy = a.latitude - b.latitude;
-  return Math.hypot(dx, dy) < nmToPx(minNm) && a.altitude == b.altitude;
+export function generateCallsign() {
+  if (Math.random() < 0.12) return generateRegistration();
+  return `${randomChoice(CALLSIGN_OPERATORS)}${randomInt(1, 9999)}`;
 }
 
-function isEastbound(heading) {
-  return heading < 180;
-}
+function compatibleAircraftTypes({ aircraftType, speedKts, flightLevel }) {
+  if (aircraftType !== undefined) {
+    const data = AIRCRAFT_TYPES[aircraftType];
+    if (!data) throw new Error(`Unknown aircraft type: ${aircraftType}`);
+    if (speedKts !== undefined && (speedKts < data.minSpeedKts || speedKts > data.maxSpeedKts)) {
+      throw new Error(`${aircraftType} cannot satisfy speed ${speedKts} kt`);
+    }
+    if (flightLevel !== undefined && flightLevel > data.maxFlightLevel) {
+      throw new Error(`${aircraftType} cannot satisfy FL${flightLevel}`);
+    }
+    return [aircraftType];
+  }
 
-function altitudeMatchesHeading(altitude, heading) {
-  const isOdd = altitude % 2 !== 0;
-  return isEastbound(heading) ? isOdd : !isOdd;
-}
-
-function getCompatibleAircraftModels({ speed, altitude, aircraftModel }) {
-  if (aircraftModel) return [aircraftModel];
-  
   return Object.entries(AIRCRAFT_TYPES)
-    .filter(([_, model]) => {
-      if (speed !== undefined && speed > model.maxSpeed) return false;
-      if (altitude !== undefined && altitude > model.maxAlt) return false;
+    .filter(([, data]) => {
+      if (speedKts !== undefined && (speedKts < data.minSpeedKts || speedKts > data.maxSpeedKts)) return false;
+      if (flightLevel !== undefined && flightLevel > data.maxFlightLevel) return false;
       return true;
     })
-    .map(([name]) => name);
+    .map(([type]) => type);
 }
 
-function deriveHeadingFromAltitude(altitude) {
-  const eastbound = altitude % 2 !== 0;
-  const min = eastbound ? 1 : 180;
-  const range = eastbound ? 179 : 180;
-  return Math.floor(Math.random() * range) + min;
+function randomFlightLevel(maxFlightLevel) {
+  return randomChoice(FLIGHT_LEVELS.filter((level) => level <= maxFlightLevel));
 }
 
-function deriveAltitudeFromHeading(modelData, heading) {
-  const eastbound = isEastbound(heading);  
-  let altitude;
-    do {
-      altitude = Math.floor(Math.random() * (modelData.maxAlt - MIN_ALT + 1) + MIN_ALT);
-    } while ((altitude % 2 !== 0) !== eastbound);
-  return altitude;
+function randomVerticalRate(modelData) {
+  if (Math.random() >= 0.12) return 0;
+  const direction = Math.random() < 0.5 ? -1 : 1;
+  const magnitude = Math.round(randomBetween(500, modelData.maxVerticalRateFpm) / 100) * 100;
+  return direction * magnitude;
 }
 
-function generateRandomHeading() {
-  return Math.floor(Math.random() * 360) + 1;
-}
+export function createAircraft(bounds, pad, overrides = {}) {
+  const candidates = compatibleAircraftTypes(overrides);
+  if (!candidates.length) throw new Error("No aircraft type satisfies the requested constraints");
 
-function resolveHeadingAndAltitude(modelData, overrides) {
-  const { heading, altitude } = overrides;
+  const aircraftType = overrides.aircraftType ?? randomChoice(candidates);
+  const modelData = AIRCRAFT_TYPES[aircraftType];
+  const flightLevel = overrides.flightLevel ?? randomFlightLevel(modelData.maxFlightLevel);
+  const speedKts = overrides.speedKts ?? Math.round(randomBetween(modelData.minSpeedKts, modelData.maxSpeedKts));
+  const verticalRateFpm = overrides.verticalRateFpm ?? randomVerticalRate(modelData);
 
-  // Both provided → validate compatibility
-  if (heading !== undefined && altitude !== undefined) {
-    if (!altitudeMatchesHeading(altitude, heading)) {
-      throw new Error(
-        `Incompatible heading (${heading}°) and altitude (${altitude}k ft): ` +
-        `${isEastbound(heading) ? 'Eastbound' : 'Westbound'} flights must use ` +
-        `${isEastbound(heading) ? 'odd' : 'even'} altitudes`
-      );
-    }
-    return { heading, altitude };
+  if (flightLevel > modelData.maxFlightLevel) {
+    throw new Error(`${aircraftType} cannot operate at FL${flightLevel}`);
+  }
+  if (speedKts < modelData.minSpeedKts || speedKts > modelData.maxSpeedKts) {
+    throw new Error(`${aircraftType} cannot operate at ${speedKts} kt in this simplified model`);
+  }
+  if (Math.abs(verticalRateFpm) > modelData.maxVerticalRateFpm) {
+    throw new Error(`${aircraftType} vertical rate exceeds the simplified performance envelope`);
   }
 
-  // Heading only → derive altitude
-  if (heading !== undefined) {
-    return {
-      heading,
-      altitude: deriveAltitudeFromHeading(modelData, heading),
-    };
-  }
-
-  // Altitude only → derive heading
-  if (altitude !== undefined) {
-    return {
-      altitude,
-      heading: deriveHeadingFromAltitude(altitude),
-    };
-  }
-
-  // Neither → generate both
-  const randomHeading = generateRandomHeading();
   return {
-    heading: randomHeading,
-    altitude: deriveAltitudeFromHeading(modelData, randomHeading),
+    id: createId(),
+    callsign: overrides.callsign ?? generateCallsign(),
+    aircraftType,
+    speedKts,
+    flightLevel,
+    verticalRateFpm,
+    heading: normalizeHeading(overrides.heading ?? randomBetween(0, 360)),
+    x: overrides.x ?? randomBetween(pad, bounds.width - pad),
+    y: overrides.y ?? randomBetween(pad, bounds.height - pad),
   };
-}
-
-function climbRate(modelData, overrides) {
-  const {climb} = overrides;
-
-  if (climb !== undefined) {
-    return {climb};
-  }
-
-  const climbDirection = Math.random() < 0.5 ? -1 : 1;
-  const isClimbing = Math.random() < 0.1 ? true : false;
-
-  if (climbDirection == 1 && isClimbing) {
-    return {climb: Math.round(biasedRandom() * modelData.climb)};
-  } else if (isClimbing) {
-    return {climb: Math.round(-2 * biasedRandom() * modelData.climb)}
-  } else {
-    return {climb: 0}
-  }
-}
-
-export function createAircraftInstance(radarRangePx, pad, overrides = {}) {
-  const candidates = getCompatibleAircraftModels(overrides);
-  
-  if (candidates.length === 0) {
-    throw new Error("No aircraft can satisfy the given constraints");
-  }
-
-  const modelName = randomChoice(candidates);
-  const modelData = AIRCRAFT_TYPES[modelName];
-  
-  const { heading, altitude } = resolveHeadingAndAltitude(modelData, overrides);
-  
-  const speed =
-    overrides.speed ??
-    Math.round(Math.random() * (modelData.maxSpeed - MIN_SPEED) + MIN_SPEED);
-
-  const longitude = 
-    overrides.longitude ??
-    Math.round(biasedRandom() * (radarRangePx - pad * 2)) + pad;
-
-  const latitude = 
-    overrides.latitude ??
-    Math.round(biasedRandom() * (radarRangePx - pad * 2)) + pad;
-
-  const {climb} = climbRate(modelData, overrides);
-  
-  return {
-    id: crypto.randomUUID(),
-    callsign: generateCallsign(),
-    aircraftModel: modelName,
-    modelData,
-    latitude,
-    longitude,
-    heading,
-    altitude,
-    speed,
-    climb,
-  };
-}
-
-export function renderTrail(wrapper, aircraft, numDots = 4) {
-  wrapper.querySelectorAll(".trail-dot").forEach((d) => d.remove());
-
-  const { vx, vy } = headingToUnitVector(aircraft.heading);
-  const spacing = speedToTrailSpacingPx(aircraft.speed);
-
-  for (let i = 1; i <= numDots; i++) {
-    const dot = document.createElement("div");
-    dot.className = "trail-dot";
-
-    const x = -vx * spacing * i;
-    const y = -vy * spacing * i;
-
-    dot.style.left = `${x}px`;
-    dot.style.top = `${y}px`;
-
-    wrapper.appendChild(dot);
-  }
 }
 
 export function positionAircraft(wrapper, aircraft) {
-  wrapper.style.left = `${aircraft.longitude}px`;
-  wrapper.style.top = `${aircraft.latitude}px`;
+  wrapper.style.left = `${aircraft.x}px`;
+  wrapper.style.top = `${aircraft.y}px`;
+}
+
+export function renderTrail(wrapper, aircraft, count) {
+  wrapper.querySelectorAll(".trail-dot").forEach((dot) => dot.remove());
+  const { vx, vy } = headingToUnitVector(aircraft.heading);
+  const spacingPx = nmToPx((aircraft.speedKts / 60) * HISTORY_INTERVAL_MINUTES);
+
+  for (let i = 1; i <= count; i += 1) {
+    const dot = document.createElement("div");
+    dot.className = "trail-dot";
+    dot.style.left = `${-vx * spacingPx * i}px`;
+    dot.style.top = `${-vy * spacingPx * i}px`;
+    wrapper.appendChild(dot);
+  }
 }
 
 export function createLeaderLine(leaderSvg) {
@@ -222,117 +125,89 @@ export function createLeaderLine(leaderSvg) {
   return line;
 }
 
-export function createDataTag(aircraft, aircraftX, aircraftY, radarScreen) {
+function formatTag(aircraft) {
+  const trend = aircraft.verticalRateFpm === 0
+    ? ""
+    : `${aircraft.verticalRateFpm > 0 ? "↑" : "↓"}${Math.round(Math.abs(aircraft.verticalRateFpm) / 100)}`;
+  const speedCode = Math.round(aircraft.speedKts / 10).toString().padStart(2, "0");
+  return `${aircraft.callsign}\n${aircraft.flightLevel}${trend} ${speedCode}\n${aircraft.aircraftType}`;
+}
+
+export function createDataTag(aircraft, tagLayer, radarScreen) {
   const tag = document.createElement("div");
   tag.className = "data-tag";
+  tag.textContent = formatTag(aircraft);
+  tag.title = `${aircraft.callsign}: FL${aircraft.flightLevel}, ${Math.round(aircraft.speedKts)} kt, heading ${Math.round(aircraft.heading)}°`;
+  tagLayer.appendChild(tag);
 
-  if (aircraft.climb == 0) {
-    tag.textContent = `${aircraft.callsign}\n${aircraft.altitude} ${aircraft.speed}\n${aircraft.aircraftModel}`;
-  } else {
-    const climbIcon =
-      aircraft.climb > 0
-        ? '<i class="fa-solid fa-arrow-up fa-xs"></i>'
-        : aircraft.climb < 0
-        ? '<i class="fa-solid fa-arrow-down fa-xs"></i>'
-        : '';
-    tag.innerHTML = `${aircraft.callsign}\n${aircraft.altitude}${climbIcon}${Math.abs(aircraft.climb)} ${aircraft.speed}\n${aircraft.aircraftModel}`;
-  }
-  
+  const radarRect = radarScreen.getBoundingClientRect();
+  const tagWidth = tag.offsetWidth || 92;
+  const tagHeight = tag.offsetHeight || 48;
+  const x = clamp(aircraft.x + 34, 8, radarRect.width - tagWidth - 8);
+  const y = clamp(aircraft.y - 24, 8, radarRect.height - tagHeight - 8);
 
-  tag.style.position = "absolute";
-
-  const radarWidth = radarScreen.getBoundingClientRect().width;
-  const radarHeight = radarScreen.getBoundingClientRect().height;
-  const tagWidth = 100;
-  const tagHeight = 50;
-
-  let initialX = aircraftX + 40;
-  let initialY = aircraftY - 20;
-
-  initialX = clamp(initialX, 10, radarWidth - tagWidth - 10);
-  initialY = clamp(initialY, 10, radarHeight - tagHeight - 10);
-
-  tag.style.left = `${initialX}px`;
-  tag.style.top = `${initialY}px`;
-
-  radarScreen.appendChild(tag);
-
+  tag.style.left = `${x}px`;
+  tag.style.top = `${y}px`;
   return tag;
 }
 
-export function updateLeaderForAircraft(aircraftX, aircraftY, tagEl, lineEl) {
-  const tagX = parseFloat(tagEl.style.left);
-  const tagY = parseFloat(tagEl.style.top);
-  const tagWidth = tagEl.offsetWidth;
-  const tagHeight = tagEl.offsetHeight;
-
-  // Get the closest point on the tag's edge to the aircraft
-  const closestPoint = getClosestPointOnRect(
-    tagX,
-    tagY,
-    tagWidth,
-    tagHeight,
-    aircraftX,
-    aircraftY
-  );
-
-  setLine(lineEl, aircraftX, aircraftY, closestPoint.x, closestPoint.y);
+export function updateLeaderForAircraft(aircraft, tag, line) {
+  const rect = {
+    x: parseFloat(tag.style.left),
+    y: parseFloat(tag.style.top),
+    width: tag.offsetWidth,
+    height: tag.offsetHeight,
+  };
+  const anchor = { x: aircraft.x, y: aircraft.y };
+  const edge = getClosestPointOnRect(rect, anchor);
+  setSvgLine(line, anchor.x, anchor.y, edge.x, edge.y);
 }
 
-export function enableTagDragging(
-  tag,
-  anchorX,
-  anchorY,
-  lineEl,
-  radarScreen,
-  maxDist = 180
-) {
-  let dragging = false;
-  let offsetX, offsetY;
+export function enableTagDragging(tag, aircraft, line, radarScreen, maxDistancePx = 180) {
+  let pointerId = null;
+  let offsetX = 0;
+  let offsetY = 0;
 
-  const radarRect = radarScreen.getBoundingClientRect();
-
-  tag.addEventListener("mousedown", (e) => {
-    dragging = true;
+  tag.addEventListener("pointerdown", (event) => {
+    pointerId = event.pointerId;
     const tagRect = tag.getBoundingClientRect();
-    offsetX = e.clientX - tagRect.left;
-    offsetY = e.clientY - tagRect.top;
-    tag.style.cursor = "grabbing";
-    e.preventDefault();
-    e.stopPropagation();
+    offsetX = event.clientX - tagRect.left;
+    offsetY = event.clientY - tagRect.top;
+    tag.setPointerCapture(pointerId);
+    tag.classList.add("dragging");
+    event.preventDefault();
   });
 
-  document.addEventListener("mousemove", (e) => {
-    if (!dragging) return;
+  tag.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== pointerId) return;
 
-    let x = e.clientX - radarRect.left - offsetX;
-    let y = e.clientY - radarRect.top - offsetY;
+    const radarRect = radarScreen.getBoundingClientRect();
+    let x = event.clientX - radarRect.left - offsetX;
+    let y = event.clientY - radarRect.top - offsetY;
 
-    const dx = x - anchorX;
-    const dy = y - anchorY;
-    const dist = Math.hypot(dx, dy);
-
-    if (dist > maxDist) {
-      const s = maxDist / dist;
-      x = anchorX + dx * s;
-      y = anchorY + dy * s;
+    const dx = x - aircraft.x;
+    const dy = y - aircraft.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance > maxDistancePx) {
+      const scale = maxDistancePx / distance;
+      x = aircraft.x + dx * scale;
+      y = aircraft.y + dy * scale;
     }
 
-    const tagWidth = tag.offsetWidth;
-    const tagHeight = tag.offsetHeight;
-    x = clamp(x, 0, radarRect.width - tagWidth);
-    y = clamp(y, 0, radarRect.height - tagHeight);
-
+    x = clamp(x, 0, radarRect.width - tag.offsetWidth);
+    y = clamp(y, 0, radarRect.height - tag.offsetHeight);
     tag.style.left = `${x}px`;
     tag.style.top = `${y}px`;
-
-    updateLeaderForAircraft(anchorX, anchorY, tag, lineEl);
+    updateLeaderForAircraft(aircraft, tag, line);
   });
 
-  document.addEventListener("mouseup", () => {
-    if (dragging) {
-      dragging = false;
-      tag.style.cursor = "grab";
-    }
-  });
+  const stopDragging = (event) => {
+    if (event.pointerId !== pointerId) return;
+    if (tag.hasPointerCapture(pointerId)) tag.releasePointerCapture(pointerId);
+    pointerId = null;
+    tag.classList.remove("dragging");
+  };
+
+  tag.addEventListener("pointerup", stopDragging);
+  tag.addEventListener("pointercancel", stopDragging);
 }

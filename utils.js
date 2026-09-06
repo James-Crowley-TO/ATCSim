@@ -1,143 +1,121 @@
-// Utility functions
-import { PX_TO_NM } from "./constants.js";
+import { NM_PER_PIXEL } from "./constants.js";
 
 export function pxToNm(px) {
-  return px * PX_TO_NM;
+  return px * NM_PER_PIXEL;
 }
 
 export function nmToPx(nm) {
-  return nm / PX_TO_NM;
+  return nm / NM_PER_PIXEL;
 }
 
-export function randomChoice(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+export function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
-export function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
+export function randomBetween(min, max) {
+  return min + Math.random() * (max - min);
 }
 
-export function headingToUnitVector(deg) {
-  const rad = (deg * Math.PI) / 180;
-  const vx = Math.sin(rad);
-  const vy = -Math.cos(rad);
-  return { vx, vy };
+export function randomInt(min, max) {
+  return Math.floor(randomBetween(min, max + 1));
 }
 
-export function speedToTrailSpacingPx(speed) {
-  return nmToPx(speed / 120);
+export function randomStep(min, max, step) {
+  const steps = Math.floor((max - min) / step);
+  return min + randomInt(0, steps) * step;
 }
 
-export function getClosestPointOnRect(
-  rectX,
-  rectY,
-  rectWidth,
-  rectHeight,
-  targetX,
-  targetY
-) {
-  // Calculate center of rectangle
-  const centerX = rectX + rectWidth / 2;
-  const centerY = rectY + rectHeight / 2;
+export function randomChoice(items) {
+  if (!items.length) throw new Error("Cannot choose from an empty array");
+  return items[randomInt(0, items.length - 1)];
+}
 
-  // Vector from center to target
-  const dx = targetX - centerX;
-  const dy = targetY - centerY;
+export function chance(probability) {
+  return Math.random() < probability;
+}
 
-  // Check if target is inside the rectangle
-  if (
-    targetX >= rectX &&
-    targetX <= rectX + rectWidth &&
-    targetY >= rectY &&
-    targetY <= rectY + rectHeight
-  ) {
-    // Target is inside, find closest edge
-    const distToLeft = targetX - rectX;
-    const distToRight = rectX + rectWidth - targetX;
-    const distToTop = targetY - rectY;
-    const distToBottom = rectY + rectHeight - targetY;
+export function normalizeHeading(heading) {
+  return ((heading % 360) + 360) % 360;
+}
 
-    const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
+export function headingToUnitVector(heading) {
+  const radians = (normalizeHeading(heading) * Math.PI) / 180;
+  return {
+    vx: Math.sin(radians),
+    vy: -Math.cos(radians),
+  };
+}
 
-    if (minDist === distToLeft) return { x: rectX, y: targetY };
-    if (minDist === distToRight) return { x: rectX + rectWidth, y: targetY };
-    if (minDist === distToTop) return { x: targetX, y: rectY };
-    return { x: targetX, y: rectY + rectHeight };
+export function projectPoint(x, y, heading, speedKts, minutes) {
+  const { vx, vy } = headingToUnitVector(heading);
+  const distancePx = nmToPx((speedKts / 60) * minutes);
+  return {
+    x: x + vx * distancePx,
+    y: y + vy * distancePx,
+  };
+}
+
+export function distanceNm(a, b) {
+  return pxToNm(Math.hypot(a.x - b.x, a.y - b.y));
+}
+
+export function bearingDegrees(from, to) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  return normalizeHeading((Math.atan2(dx, -dy) * 180) / Math.PI);
+}
+
+export function isInsideBounds(point, bounds, pad = 0) {
+  return (
+    point.x >= pad &&
+    point.x <= bounds.width - pad &&
+    point.y >= pad &&
+    point.y <= bounds.height - pad
+  );
+}
+
+export function setSvgLine(line, x1, y1, x2, y2) {
+  line.setAttribute("x1", x1);
+  line.setAttribute("y1", y1);
+  line.setAttribute("x2", x2);
+  line.setAttribute("y2", y2);
+}
+
+export function getClosestPointOnRect(rect, target) {
+  const centerX = rect.x + rect.width / 2;
+  const centerY = rect.y + rect.height / 2;
+  const dx = target.x - centerX;
+  const dy = target.y - centerY;
+
+  if (dx === 0 && dy === 0) {
+    return { x: centerX, y: rect.y };
   }
 
-  // Target is outside, project onto edges
-  let closestPoint = { x: centerX, y: centerY };
-  let minDistance = Infinity;
+  const halfWidth = rect.width / 2;
+  const halfHeight = rect.height / 2;
+  const scale = 1 / Math.max(Math.abs(dx) / halfWidth, Math.abs(dy) / halfHeight);
 
-  // Top edge
-  if (dy < 0) {
-    const pointX = clamp(targetX, rectX, rectX + rectWidth);
-    const dist = Math.hypot(pointX - targetX, rectY - targetY);
-    if (dist < minDistance) {
-      minDistance = dist;
-      closestPoint = { x: pointX, y: rectY };
-    }
-  }
-
-  // Bottom edge
-  if (dy > 0) {
-    const pointX = clamp(targetX, rectX, rectX + rectWidth);
-    const dist = Math.hypot(pointX - targetX, rectY + rectHeight - targetY);
-    if (dist < minDistance) {
-      minDistance = dist;
-      closestPoint = { x: pointX, y: rectY + rectHeight };
-    }
-  }
-
-  // Left edge
-  if (dx < 0) {
-    const pointY = clamp(targetY, rectY, rectY + rectHeight);
-    const dist = Math.hypot(rectX - targetX, pointY - targetY);
-    if (dist < minDistance) {
-      minDistance = dist;
-      closestPoint = { x: rectX, y: pointY };
-    }
-  }
-
-  // Right edge
-  if (dx > 0) {
-    const pointY = clamp(targetY, rectY, rectY + rectHeight);
-    const dist = Math.hypot(rectX + rectWidth - targetX, pointY - targetY);
-    if (dist < minDistance) {
-      minDistance = dist;
-      closestPoint = { x: rectX + rectWidth, y: pointY };
-    }
-  }
-
-  return closestPoint;
+  return {
+    x: centerX + dx * scale,
+    y: centerY + dy * scale,
+  };
 }
 
-export function biasedRandom() {
-  return (Math.random() + Math.random())/2
+export function randomLetters(length) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let value = "";
+  for (let i = 0; i < length; i += 1) {
+    value += alphabet[randomInt(0, alphabet.length - 1)];
+  }
+  return value;
 }
 
-export function setLine(lineEl, x1, y1, x2, y2) {
-  lineEl.setAttribute("x1", x1);
-  lineEl.setAttribute("y1", y1);
-  lineEl.setAttribute("x2", x2);
-  lineEl.setAttribute("y2", y2);
+export function createId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `ac-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function randomString(n, op) {
-  var result = '';
-  let characters;
-  switch(op) {
-    case "C": 
-      characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      break;
-    case "K": 
-      characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      break;
-  }
-  
-  var charactersLength = characters.length;
-  for ( var i = 0; i < n; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
+export function round(value, decimals = 1) {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
 }
