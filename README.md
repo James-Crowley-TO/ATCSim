@@ -4,6 +4,8 @@ A dependency-free browser application that generates static en-route radar snaps
 
 The project is intentionally **not** a full ATC simulator. It presents a traffic picture, gives the user familiar geometric aids, and asks a narrower question: **which aircraft pairs will lose separation if nobody acts?** That keeps the exercise focused on scanning, projection, geometry, prioritisation, and verification.
 
+https://james-crowley-to.github.io/ATCSim/
+
 ## What the trainer does
 
 - Generates a fresh radar snapshot at **Easy**, **Medium**, or **Hard** difficulty.
