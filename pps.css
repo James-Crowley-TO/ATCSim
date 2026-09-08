@@ -7,18 +7,28 @@
   pointer-events: none;
 }
 
-#airspace-boundary {
-  fill: rgba(66, 200, 233, .025);
-  stroke: rgba(91, 184, 211, .52);
-  stroke-width: 1.5;
-  stroke-dasharray: 9 5;
+.map-layer,
+.map-feature,
+.map-stroke,
+.map-hashes,
+.map-point-marker,
+.map-label {
   pointer-events: none;
 }
 
-.centre-marker {
-  stroke: #538399;
-  stroke-width: 1;
-  pointer-events: none;
+.map-stroke,
+.map-hashes,
+.map-point-marker {
+  vector-effect: non-scaling-stroke;
+}
+
+.map-label {
+  font: 9px "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  letter-spacing: .05em;
+  paint-order: stroke;
+  stroke: var(--radar);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 
 .leader-line {

@@ -1,0 +1,243 @@
+# Fictional high-level en-route map inspired by the density and hierarchy of
+# Great Lakes navigation charts. Coordinates and radii are nautical miles.
+
+MAP "Lake Meridian High"
+SIZE 170 150
+
+# Sparse geographic cues: enough to orient the eye without becoming a basemap.
+LAYER geography
+STYLE color=#42606a opacity=0.28 width=0.7 pattern=dotted
+ARC 31 28 30 238 52
+ARC 66 47 36 214 38
+ARC 109 31 43 232 83
+ARC 136 69 31 254 76
+ARC 54 121 45 286 42
+ARC 121 123 54 311 61
+
+# Major high-altitude sector boundaries.
+LAYER sectors
+STYLE color=#8ba7ad opacity=0.72 width=1.5 pattern=solid
+LINE 0 37 31 31
+LINE 31 31 52 43
+LINE 52 43 68 31
+LINE 68 31 79 13
+LINE 79 13 112 17
+LINE 112 17 127 40
+LINE 127 40 170 48
+
+LINE 0 75 25 70
+LINE 25 70 48 80
+LINE 48 80 72 72
+LINE 72 72 94 82
+LINE 94 82 119 69
+LINE 119 69 144 78
+LINE 144 78 170 69
+
+LINE 0 116 30 111
+LINE 30 111 57 120
+LINE 57 120 88 109
+LINE 88 109 112 121
+LINE 112 121 140 111
+LINE 140 111 170 120
+
+LINE 31 31 25 70
+LINE 52 43 48 80
+LINE 68 31 72 72
+LINE 127 40 119 69
+LINE 144 78 140 111
+LINE 57 120 52 150
+LINE 112 121 117 150
+
+# Inner terminal sectors around the principal junction at MERID.
+LAYER terminal-sectors
+STYLE color=#a9c0c5 opacity=0.62 width=1 pattern=dashed
+LINE 61 91 74 82
+LINE 74 82 93 84
+LINE 93 84 107 94
+LINE 107 94 105 111
+LINE 105 111 91 124
+LINE 91 124 72 119
+LINE 72 119 61 106
+LINE 61 106 61 91
+LINE 74 82 78 101
+LINE 78 101 61 106
+LINE 78 101 105 111
+LINE 78 101 91 124
+LINE 78 101 107 94
+
+# Primary jet routes radiating through the central complex.
+LAYER trunk-routes
+STYLE color=#7fb7c6 opacity=0.76 width=1.25 pattern=solid
+LINE 0 24 29 42
+LINE 29 42 54 63
+LINE 54 63 78 101
+LINE 78 101 108 113
+LINE 108 113 140 128
+LINE 140 128 170 142
+
+LINE 8 150 28 131
+LINE 28 131 49 116
+LINE 49 116 78 101
+LINE 78 101 104 78
+LINE 104 78 128 55
+LINE 128 55 170 27
+
+LINE 0 91 31 92
+LINE 31 92 57 97
+LINE 57 97 78 101
+LINE 78 101 111 100
+LINE 111 100 140 91
+LINE 140 91 170 88
+
+LINE 44 0 51 31
+LINE 51 31 62 58
+LINE 62 58 78 101
+LINE 78 101 82 126
+LINE 82 126 84 150
+
+# Secondary airways create the braided chart-like network.
+LAYER secondary-routes
+STYLE color=#6f949e opacity=0.48 width=0.8 pattern=dashed
+LINE 0 55 30 62
+LINE 30 62 54 63
+LINE 54 63 74 82
+LINE 74 82 104 78
+LINE 104 78 139 66
+LINE 139 66 170 58
+
+LINE 15 0 36 29
+LINE 36 29 52 43
+LINE 52 43 62 58
+LINE 62 58 93 84
+LINE 93 84 111 100
+LINE 111 100 142 112
+LINE 142 112 164 150
+
+LINE 0 134 28 131
+LINE 28 131 57 120
+LINE 57 120 72 119
+LINE 72 119 82 126
+LINE 82 126 108 137
+LINE 108 137 137 150
+
+LINE 102 0 101 29
+LINE 101 29 96 56
+LINE 96 56 93 84
+LINE 93 84 78 101
+LINE 78 101 49 116
+LINE 49 116 18 122
+LINE 18 122 0 125
+
+LINE 170 103 140 91
+LINE 140 91 119 69
+LINE 119 69 104 78
+LINE 104 78 78 101
+LINE 78 101 57 97
+LINE 57 97 30 111
+LINE 30 111 5 150
+
+# Flow corridors and preferred arrival tracks.
+LAYER flow-corridors
+STYLE color=#9c86d1 opacity=0.52 width=1 pattern=dotted
+LINE 0 13 29 42
+LINE 29 42 62 58
+LINE 62 58 78 101
+LINE 78 101 91 124
+LINE 91 124 103 150
+LINE 170 14 139 35
+LINE 139 35 128 55
+LINE 128 55 107 94
+LINE 107 94 78 101
+
+STYLE color=#d39b5b opacity=0.5 width=1 pattern=dashed
+LINE 4 109 31 92
+LINE 31 92 54 63
+LINE 54 63 79 45
+LINE 79 45 112 17
+LINE 170 130 142 112
+LINE 142 112 111 100
+LINE 111 100 104 78
+LINE 104 78 96 56
+
+# Terminal range rings and curved arrival gates.
+LAYER terminal-rings
+STYLE color=#88aeb8 opacity=0.46 width=0.85 pattern=dotted
+CIRCLE 78 101 9
+CIRCLE 78 101 18
+CIRCLE 78 101 30
+ARC 78 101 23 196 282 pattern=hashed hash-spacing=7 hash-length=3
+ARC 78 101 25 18 108 pattern=hashed hash-spacing=7 hash-length=3
+ARC 137 66 10 225 95
+CIRCLE 137 66 16
+CIRCLE 29 42 11
+
+# Special-use airspace: fictional and deliberately offset from primary routes.
+LAYER special-use
+STYLE color=#c98686 opacity=0.68 width=1.1 pattern=hashed hash-spacing=6 hash-length=4
+LINE 18 48 31 51
+LINE 31 51 39 67
+LINE 39 67 27 78
+LINE 27 78 14 69
+LINE 14 69 18 48
+
+LINE 118 22 139 27
+LINE 139 27 145 43
+LINE 145 43 128 55
+LINE 128 55 116 42
+LINE 116 42 118 22
+
+CIRCLE 116 131 9
+ARC 150 112 13 205 42
+
+# Navigation fixes. Triangles mark compulsory reporting points.
+LAYER fixes
+STYLE color=#b9d5da opacity=0.94 width=1.1 shape=triangle size=4.5 filled=false
+POINT 29 42 label=NORVA
+POINT 54 63 label=KELSO
+POINT 78 101 label=MERID filled=true size=6
+POINT 108 113 label=DOVAR
+POINT 140 128 label=PELON
+POINT 49 116 label=RIMBA
+POINT 104 78 label=TEVIK
+POINT 128 55 label=OSKAR
+POINT 31 92 label=HALEN
+POINT 57 97 label=VEXUM
+POINT 111 100 label=BINOR
+POINT 140 91 label=KAPPA
+POINT 51 31 label=ULDEN
+POINT 62 58 label=SAMER
+POINT 82 126 label=JUNIP
+POINT 96 56 label=REKON
+POINT 93 84 label=TILDA
+POINT 72 119 label=GEMLI
+
+# Non-compulsory fixes and local anchors.
+STYLE color=#8fb0b8 opacity=0.82 width=1 shape=diamond size=3.5 filled=false rotation=45
+POINT 36 29 label=APTOR
+POINT 30 62 label=KORAL
+POINT 74 82 label=MOLEN
+POINT 107 94 label=EBDEN
+POINT 91 124 label=NUVAK
+POINT 108 137 label=FARON
+POINT 101 29 label=BIWAS
+POINT 119 69 label=UMORA
+POINT 139 66 label=EXBOX
+POINT 142 112 label=SANBY
+POINT 28 131 label=TAKNO
+POINT 18 122 label=ROKUS
+
+# Aerodromes and sector labels use distinct symbols.
+LAYER aerodromes
+STYLE color=#d7e4e6 opacity=0.95 width=1.2 shape=circle size=5 filled=false
+POINT 78 101 label="MERIDIAN INTL" size=7
+POINT 29 42 label="NORTH BAY"
+POINT 137 66 label="EASTPORT"
+POINT 116 131 label="SOUTH FIELD"
+
+LAYER labels
+STYLE color=#9eb4b9 opacity=0.48 width=0.8 shape=cross size=1.5
+POINT 48 20 label="NORTH HIGH FL350-FL600"
+POINT 91 48 label="LAKE HIGH FL280-FL600"
+POINT 138 97 label="EAST HIGH FL300-FL600"
+POINT 34 104 label="WEST HIGH FL240-FL600"
+POINT 85 141 label="SOUTH HIGH FL260-FL600"

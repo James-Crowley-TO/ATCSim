@@ -1,17 +1,12 @@
 import { HISTORY_DOTS, HISTORY_INTERVAL_MINUTES } from "./constants.js";
 import { Camera } from "./camera.js";
 import { aircraftTagRows } from "./aircraft.js";
+import { MapRenderer } from "./map.js";
 import { RadarTools } from "./tools.js";
 import { clamp, getClosestPointOnRect, nmToPx, projectPoint, setAttributes, setSvgLine, svgElement } from "./utils.js";
 
-const boundaryFractions = [
-  [0.08, 0.22], [0.25, 0.07], [0.55, 0.11], [0.72, 0.04],
-  [0.94, 0.27], [0.87, 0.53], [0.97, 0.76], [0.69, 0.93],
-  [0.43, 0.86], [0.18, 0.96], [0.04, 0.68], [0.13, 0.45],
-];
-
 export class RadarView {
-  constructor(svg, bounds, { onStatus = () => { }, onToolsChange = () => { } } = {}) {
+  constructor(svg, bounds, { map = null, onStatus = () => { }, onToolsChange = () => { } } = {}) {
     this.svg = svg;
     this.bounds = bounds;
     this.camera = new Camera(bounds);
@@ -24,13 +19,13 @@ export class RadarView {
     this.pattern.append(this.gridPath);
     defs.append(this.pattern);
     this.background = svgElement("rect", { width: "100%", height: "100%", fill: "url(#radar-grid-pattern)" });
-    this.boundary = svgElement("polygon", { id: "airspace-boundary" });
-    this.centre = svgElement("path", { class: "centre-marker" });
+    this.mapLayer = svgElement("g", { id: "map-layer", "aria-hidden": "true" });
+    this.mapRenderer = map ? new MapRenderer(this.mapLayer, map) : null;
     this.layers = {};
     for (const name of ["tools", "leaders", "trails", "targets", "tags"]) {
       this.layers[name] = svgElement("g", { id: `${name}-layer` });
     }
-    svg.replaceChildren(defs, this.background, this.boundary, this.centre, ...Object.values(this.layers));
+    svg.replaceChildren(defs, this.background, this.mapLayer, ...Object.values(this.layers));
     this.createScale();
     this.tools = new RadarTools(this.layers.tools, () => {
       onToolsChange(this.tools);
@@ -137,12 +132,7 @@ export class RadarView {
     const mod = value => ((value % spacing) + spacing) % spacing;
     setAttributes(this.pattern, { x: mod(camera.x), y: mod(camera.y), width: spacing, height: spacing });
     this.gridPath.setAttribute("d", `M ${spacing} 0 H 0 V ${spacing}`);
-    this.boundary.setAttribute("points", boundaryFractions.map(([x, y]) => {
-      const point = camera.toScreen({ x: x * this.bounds.width, y: y * this.bounds.height });
-      return `${point.x},${point.y}`;
-    }).join(" "));
-    const centre = camera.toScreen({ x: this.bounds.width / 2, y: this.bounds.height / 2 });
-    this.centre.setAttribute("d", `M ${centre.x - 5} ${centre.y} h 10 M ${centre.x} ${centre.y - 5} v 10`);
+    this.mapRenderer?.render(camera);
     for (const record of this.records.values()) {
       const point = camera.toScreen(record.aircraft);
       record.target.setAttribute("transform", `translate(${point.x} ${point.y})`);

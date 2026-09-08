@@ -1,15 +1,28 @@
 import { DIFFICULTIES } from "./constants.js";
+import { loadMapFiles, mapBounds } from "./map.js";
 import { generateScenario } from "./scenarios.js";
 import { RadarView } from "./radar.js";
 import { hideSolution, renderFlightStrips, renderScenarioBriefing, showGenerationError, toggleSolution } from "./ui.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+// Add more files to this list to place independent overlays over the base map.
+const MAP_FILES = ["./maps/lake-meridian-high.map"];
+
+document.addEventListener("DOMContentLoaded", async () => {
   const difficultySelect = document.getElementById("difficultySelect");
   const status = document.getElementById("tool-status");
   const buttons = [...document.querySelectorAll(".tool-btn")];
-  const bounds = { width: 760, height: 760 };
+  let map;
+  try {
+    map = await loadMapFiles(MAP_FILES);
+  } catch (error) {
+    showGenerationError(error instanceof Error ? error.message : "Unable to load the radar map");
+    return;
+  }
+
+  const bounds = mapBounds(map);
   let currentScenario = null;
   const radar = new RadarView(document.getElementById("radar-svg"), bounds, {
+    map,
     onStatus: message => { status.textContent = message; },
     onToolsChange: tools => {
       for (const button of buttons) {
@@ -34,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentScenario = generateScenario(difficultySelect.value, bounds);
       radar.setScenario(currentScenario);
       renderFlightStrips(currentScenario, bounds);
-      renderScenarioBriefing(currentScenario);
+      renderScenarioBriefing(currentScenario, map.name);
     } catch (error) {
       currentScenario = null;
       radar.setScenario(null);
@@ -62,4 +75,3 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   requestAnimationFrame(generate);
 });
-
