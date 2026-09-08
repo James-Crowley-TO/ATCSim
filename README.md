@@ -12,6 +12,10 @@ python -m http.server 8000
 
 Open http://localhost:8000 in a browser. JavaScript modules require a local server; opening `index.html` directly is not supported. No package installation or build step is required.
 
+
+Also hosted here:
+https://james-crowley-to.github.io/ATCSim/
+
 ## Radar and navigation
 
 The included North Channel map covers a fictitious 76 NM square. Drag empty radar space to pan; wheel zoom is centred on the cursor. The +/− buttons also zoom. Reset view restores the initial coverage. Resizing preserves the world point at the viewport centre and the relative zoom.
