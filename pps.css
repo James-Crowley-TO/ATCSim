@@ -1,117 +1,148 @@
-.aircraft {
-  position: absolute;
-  width: 0;
-  height: 0;
+/* All coordinates reaching this SVG are screen pixels. There is no CSS scale,
+   cached bitmap layer, or scaling SVG group anywhere in the radar. */
+.radar-grid-line {
+  fill: none;
+  stroke: var(--radar-grid);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+#airspace-boundary {
+  fill: rgba(66, 200, 233, .025);
+  stroke: rgba(91, 184, 211, .52);
+  stroke-width: 1.5;
+  stroke-dasharray: 9 5;
+  pointer-events: none;
+}
+
+.centre-marker {
+  stroke: #538399;
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.leader-line {
+  stroke: rgba(66, 200, 233, .55);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.trail-dot {
+  fill: var(--amber);
+  opacity: .72;
   pointer-events: none;
 }
 
 .pps {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 9px;
-  height: 9px;
-  margin: 0;
-  padding: 0;
-  transform: translate(-50%, -50%);
-  border: 1.5px solid var(--amber);
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: none;
-  pointer-events: auto;
   cursor: crosshair;
-  z-index: 10;
+  outline: none;
 }
 
-.pps::after {
-  content: "";
-  position: absolute;
-  inset: -9px;
-  border-radius: 50%;
+.target-hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
 }
 
-.pps:hover,
-.pps:focus-visible {
-  box-shadow: 0 0 0 3px rgba(213, 169, 54, 0.18), 0 0 9px rgba(213, 169, 54, 0.65);
-}
-
-.pps.rbl-selected {
-  border-color: var(--rbl);
-  box-shadow: 0 0 0 4px rgba(101, 208, 110, 0.22);
-}
-
-.trail-dot {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: var(--amber);
-  opacity: 0.72;
+.target-symbol {
+  fill: var(--radar);
+  stroke: var(--amber);
+  stroke-width: 1.5;
   pointer-events: none;
 }
 
+.pps:hover .target-symbol,
+.pps:focus-visible .target-symbol {
+  stroke: #fff2c1;
+  stroke-width: 2.5;
+}
+
+.pps.pair-selected .target-symbol {
+  stroke: var(--cyan);
+  stroke-width: 3;
+}
+
 .data-tag {
-  position: absolute;
-  min-width: 82px;
-  padding: 4px 6px;
-  color: #bfe9f5;
-  background: rgba(4, 18, 28, 0.74);
-  border: 1px solid rgba(66, 200, 233, 0.28);
-  border-radius: 4px;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 11px;
-  line-height: 1.22;
-  white-space: pre;
-  text-align: left;
-  user-select: none;
   cursor: grab;
-  pointer-events: auto;
   touch-action: none;
 }
 
 .data-tag.dragging {
   cursor: grabbing;
-  border-color: rgba(66, 200, 233, 0.7);
 }
 
-.leader-line {
-  stroke: rgba(66, 200, 233, 0.55);
+.tag-background {
+  fill: rgba(4, 18, 28, .86);
+  stroke: rgba(66, 200, 233, .28);
   stroke-width: 1;
 }
 
-.rbl-line,
-.ptl-line,
-.halo-circle {
-  pointer-events: stroke;
+.data-tag.dragging .tag-background {
+  stroke: var(--cyan);
+}
+
+.tag-row {
+  fill: #bfe9f5;
+  font: 12px "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.tag-clearance {
+  fill: var(--clearance);
+}
+
+.tag-callsign {
+  font-weight: 600;
+}
+
+.radar-tool {
+  pointer-events: none;
+}
+
+.tool-line {
+  fill: none;
+  stroke-width: 1.6;
   cursor: pointer;
+  pointer-events: stroke;
+}
+
+.tool-line:hover {
+  stroke-width: 3;
 }
 
 .rbl-line {
   stroke: var(--rbl);
-  stroke-width: 1.7;
 }
 
 .ptl-line {
   stroke: var(--ptl);
-  stroke-width: 1.7;
 }
 
 .halo-circle {
-  fill: none;
   stroke: var(--halo);
-  stroke-width: 1.5;
 }
 
-.rbl-label,
-.ptl-label,
-.halo-label {
-  font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: 11px;
+.piv-line {
+  stroke: var(--piv);
+}
+
+.piv-separation {
+  stroke-dasharray: 4 4;
+  stroke-width: 1.2;
+}
+
+.piv-endpoint {
+  fill: var(--piv);
+  pointer-events: none;
+}
+
+.tool-label {
+  font: 11px "SFMono-Regular", Consolas, monospace;
   text-anchor: middle;
   paint-order: stroke;
   stroke: var(--radar);
-  stroke-width: 3px;
+  stroke-width: 3.5;
   stroke-linejoin: round;
   pointer-events: none;
 }
@@ -126,4 +157,30 @@
 
 .halo-label {
   fill: var(--halo);
+}
+
+.piv-label {
+  fill: var(--piv);
+}
+
+.piv-time {
+  font-weight: 600;
+}
+
+#radar-scale {
+  pointer-events: none;
+}
+
+.scale-background {
+  fill: rgba(6, 24, 38, .85);
+}
+
+.scale-line {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.scale-label {
+  fill: var(--muted);
+  font: 11px "SFMono-Regular", Consolas, monospace;
 }

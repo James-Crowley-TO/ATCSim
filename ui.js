@@ -1,16 +1,47 @@
-import { nmToPx } from "./utils.js";
+import { centreCrossingMinutes, utcTime } from "./utils.js";
+import { aircraftTagRows } from "./aircraft.js";
 
-export function renderRadarScale(scaleBar, scaleLabel, distanceNm = 10, zoom = 1) {
-  scaleBar.innerHTML = "";
-  scaleBar.style.width = `${nmToPx(distanceNm) * zoom}px`;
-  scaleLabel.textContent = `${distanceNm} NM`;
-
-  for (let i = 0; i <= distanceNm; i += 1) {
-    const tick = document.createElement("span");
-    tick.className = i === 0 || i === distanceNm ? "scale-tick end" : "scale-tick";
-    tick.style.left = `${(i / distanceNm) * 100}%`;
-    scaleBar.appendChild(tick);
-  }
+export function renderFlightStrips(scenario, bounds) {
+  const clock = document.getElementById("scenario-clock");
+  const time = utcTime(scenario.startUtcSeconds);
+  clock.textContent = time.text;
+  clock.setAttribute("datetime", `${time.text}Z`);
+  const centre = { x: bounds.width / 2, y: bounds.height / 2 };
+  const sorted = scenario.aircraft.map(aircraft => ({
+    aircraft, crossing: centreCrossingMinutes(aircraft, centre),
+  })).sort((a, b) => a.crossing - b.crossing || a.aircraft.callsign.localeCompare(b.aircraft.callsign));
+  const strips = sorted.map(({ aircraft, crossing }) => {
+    const strip = document.createElement("article");
+    strip.className = "flight-strip";
+    strip.dataset.aircraftId = aircraft.id;
+    strip.setAttribute("aria-label", `${aircraft.callsign} flight strip`);
+    const data = document.createElement("div");
+    data.className = "strip-data";
+    for (const row of aircraftTagRows(aircraft)) {
+      const line = document.createElement("div");
+      line.className = `strip-${row.kind}`;
+      line.textContent = row.text;
+      if (row.kind === "clearance") line.title = `Cleared to FL${aircraft.clearedFlightLevel}`;
+      data.append(line);
+    }
+    const details = document.createElement("div");
+    details.className = "strip-details";
+    const label = document.createElement("span");
+    label.className = "strip-time-label";
+    label.textContent = "CENTRE";
+    const estimate = document.createElement("time");
+    estimate.className = "strip-eta";
+    const utc = utcTime(scenario.startUtcSeconds, crossing);
+    estimate.textContent = utc.label;
+    estimate.title = "Time of closest approach to the original radar centre; Z means UTC.";
+    const heading = document.createElement("span");
+    heading.className = "strip-heading";
+    heading.textContent = `HDG ${String(Math.round(aircraft.heading) % 360).padStart(3, "0")}°`;
+    details.append(label, estimate, heading);
+    strip.append(data, details);
+    return strip;
+  });
+  document.getElementById("flight-strips").replaceChildren(...strips);
 }
 
 export function renderScenarioBriefing(scenario) {

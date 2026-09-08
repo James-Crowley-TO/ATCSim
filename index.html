@@ -49,6 +49,9 @@
           <button id="rbl-tool" class="tool-btn" data-tool="rbl" type="button" title="Range and bearing line">
             <span class="tool-symbol">↔</span><span>RBL</span>
           </button>
+          <button id="piv-tool" class="tool-btn" data-tool="piv" type="button" title="Projected intercept vector">
+            <span class="tool-symbol">⋈</span><span>PIV</span>
+          </button>
           <button id="halo-tool" class="tool-btn" data-tool="halo" type="button" title="Distance halo">
             <span class="tool-symbol">○</span><span>Halo</span>
           </button>
@@ -56,43 +59,43 @@
 
         <div class="tool-section">
           <span class="tool-heading">Clear</span>
-          <button id="clear-all-ptl" class="action-btn" type="button">PTL</button>
-          <button id="clear-all-rbl" class="action-btn" type="button">RBL</button>
-          <button id="clear-all-halo" class="action-btn" type="button">Halo</button>
-          <button id="clear-all-tools" class="action-btn danger" type="button">All</button>
+          <button id="clear-all-ptl" data-clear-tool="ptl" class="action-btn" type="button"
+            aria-label="Clear PTL">PTL</button>
+          <button id="clear-all-rbl" data-clear-tool="rbl" class="action-btn" type="button"
+            aria-label="Clear RBL">RBL</button>
+          <button id="clear-all-piv" data-clear-tool="piv" class="action-btn" type="button"
+            aria-label="Clear PIV">PIV</button>
+          <button id="clear-all-halo" data-clear-tool="halo" class="action-btn" type="button"
+            aria-label="Clear halos">Halo</button>
+          <button id="clear-all-tools" data-clear-tool="" class="action-btn danger" type="button"
+            aria-label="Clear all tools">All</button>
         </div>
 
         <p class="tool-help">
-          Select a tool, then click a target. RBL uses two targets. Scroll over a target to adjust its active PTL or
-          halo. Right-click a target to clear its tools.
+          RBL and PIV use two targets. Scroll over a target to adjust its PTL or halo. Right-click to clear its tools.
+          Escape cancels a pair selection.
         </p>
       </aside>
 
       <div class="radar-wrap">
-        <div id="radar-screen" aria-label="Radar scenario display" tabindex="0">
-          <div id="radar-world">
-            <div class="radar-grid" aria-hidden="true"></div>
-            <svg id="airspace-layer" class="airspace-layer" width="100%" height="100%" aria-hidden="true">
-              <polygon id="airspace-boundary"></polygon>
-            </svg>
-
-            <svg id="leader-layer" class="leader-layer" width="100%" height="100%" aria-hidden="true"></svg>
-            <div id="aircraft-container"></div>
-            <svg id="tools-layer" class="tools-layer" width="100%" height="100%" aria-hidden="true"></svg>
-            <div id="tag-layer"></div>
-          </div>
-
-          <div id="radar-scale" aria-hidden="true">
-            <div class="scale-bar"></div>
-            <span class="scale-label"></span>
-          </div>
-
+        <div id="radar-screen">
+          <svg id="radar-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
+            aria-label="Radar scenario display" tabindex="0"></svg>
           <div class="viewport-help" aria-hidden="true">Drag to pan · Wheel to zoom</div>
-          <button id="resetViewBtn" class="reset-view" type="button" title="Reset radar view">Reset view</button>
+          <div class="viewport-controls">
+            <button id="zoomOutBtn" type="button" aria-label="Zoom out">−</button>
+            <button id="zoomInBtn" type="button" aria-label="Zoom in">+</button>
+            <button id="resetViewBtn" type="button" title="Reset radar view (Home)">Reset view</button>
+          </div>
         </div>
+        <p id="tool-status" class="tool-status" role="status" aria-live="polite"></p>
       </div>
 
       <aside class="strip-bay" aria-label="Flight progress strips">
+        <div class="scenario-clock-panel">
+          <span class="clock-label">SCENARIO TIME · STATIC</span>
+          <div><time id="scenario-clock">--:--:--</time><span class="utc-label">UTC</span></div>
+        </div>
         <div class="strip-bay-header">
           <span>Flight strips</span>
           <small>Centre crossing</small>

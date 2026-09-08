@@ -1,242 +1,206 @@
 import { DEFAULT_HALO_NM, DEFAULT_PTL_MINUTES } from "./constants.js";
 import {
-  bearingDegrees,
-  distanceNm,
-  nmToPx,
-  projectPoint,
-  round,
-  setSvgLine,
+  bearingDegrees, distanceNm, nmToPx, projectPoint, projectedIntercept,
+  setAttributes, setSvgLine, svgElement, utcTime, clamp
 } from "./utils.js";
 
-export const toolState = {
-  selectedTool: null,
-  rblFirstPPS: null,
-  rbls: [],
-  ptls: new Map(),
-  halos: new Map(),
-};
+const pairKey = (a, b) => [a.id, b.id].sort().join("|");
 
-function ppsPosition(pps) {
-  const wrapper = pps.parentElement;
-  return {
-    x: parseFloat(wrapper.style.left),
-    y: parseFloat(wrapper.style.top),
-  };
-}
-
-function svgElement(name, className) {
-  const element = document.createElementNS("http://www.w3.org/2000/svg", name);
-  element.classList.add(className);
-  return element;
-}
-
-export function createRBL(pps1, pps2, toolsSvg) {
-  const line = svgElement("line", "rbl-line");
-  const label = svgElement("text", "rbl-label");
-  toolsSvg.append(line, label);
-
-  const rbl = { pps1, pps2, line, label };
-  toolState.rbls.push(rbl);
-  line.addEventListener("click", (event) => {
-    event.stopPropagation();
-    removeRBL(rbl);
-  });
-  updateRBL(rbl);
-  return rbl;
-}
-
-export function updateRBL(rbl) {
-  const a = ppsPosition(rbl.pps1);
-  const b = ppsPosition(rbl.pps2);
-  setSvgLine(rbl.line, a.x, a.y, b.x, b.y);
-
-  const midX = (a.x + b.x) / 2;
-  const midY = (a.y + b.y) / 2;
-  rbl.label.setAttribute("x", midX);
-  rbl.label.setAttribute("y", midY - 7);
-  rbl.label.textContent = `${round(distanceNm(a, b), 1)} NM / ${Math.round(bearingDegrees(a, b))}°`;
-}
-
-export function removeRBL(rbl) {
-  rbl.line.remove();
-  rbl.label.remove();
-  const index = toolState.rbls.indexOf(rbl);
-  if (index >= 0) toolState.rbls.splice(index, 1);
-}
-
-export function createPTL(pps, aircraft, toolsSvg, minutes = DEFAULT_PTL_MINUTES) {
-  if (toolState.ptls.has(pps)) return toolState.ptls.get(pps);
-
-  const line = svgElement("line", "ptl-line");
-  const label = svgElement("text", "ptl-label");
-  toolsSvg.append(line, label);
-
-  const ptl = { line, label, minutes, aircraft };
-  toolState.ptls.set(pps, ptl);
-  line.addEventListener("click", (event) => {
-    event.stopPropagation();
-    removePTL(pps);
-  });
-  updatePTL(pps, ptl);
-  return ptl;
-}
-
-export function updatePTL(pps, ptl) {
-  const start = ppsPosition(pps);
-  const end = projectPoint(start.x, start.y, ptl.aircraft.heading, ptl.aircraft.speedKts, ptl.minutes);
-  setSvgLine(ptl.line, start.x, start.y, end.x, end.y);
-
-  ptl.label.setAttribute("x", (start.x + end.x) / 2);
-  ptl.label.setAttribute("y", (start.y + end.y) / 2 - 7);
-  ptl.label.textContent = `${ptl.minutes} min`;
-}
-
-export function removePTL(pps) {
-  const ptl = toolState.ptls.get(pps);
-  if (!ptl) return;
-  ptl.line.remove();
-  ptl.label.remove();
-  toolState.ptls.delete(pps);
-}
-
-export function createHalo(pps, toolsSvg, radiusNm = DEFAULT_HALO_NM) {
-  if (toolState.halos.has(pps)) return toolState.halos.get(pps);
-
-  const circle = svgElement("circle", "halo-circle");
-  const label = svgElement("text", "halo-label");
-  toolsSvg.append(circle, label);
-
-  const halo = { circle, label, radiusNm };
-  toolState.halos.set(pps, halo);
-  circle.addEventListener("click", (event) => {
-    event.stopPropagation();
-    removeHalo(pps);
-  });
-  updateHalo(pps, halo);
-  return halo;
-}
-
-export function updateHalo(pps, halo) {
-  const position = ppsPosition(pps);
-  const radiusPx = nmToPx(halo.radiusNm);
-  halo.circle.setAttribute("cx", position.x);
-  halo.circle.setAttribute("cy", position.y);
-  halo.circle.setAttribute("r", radiusPx);
-  halo.label.setAttribute("x", position.x);
-  halo.label.setAttribute("y", position.y - radiusPx - 7);
-  halo.label.textContent = `${halo.radiusNm} NM`;
-}
-
-export function removeHalo(pps) {
-  const halo = toolState.halos.get(pps);
-  if (!halo) return;
-  halo.circle.remove();
-  halo.label.remove();
-  toolState.halos.delete(pps);
-}
-
-export function removeAllToolsForPPS(pps) {
-  [...toolState.rbls]
-    .filter((rbl) => rbl.pps1 === pps || rbl.pps2 === pps)
-    .forEach(removeRBL);
-  removePTL(pps);
-  removeHalo(pps);
-}
-
-export function clearAllTools() {
-  [...toolState.rbls].forEach(removeRBL);
-  [...toolState.ptls.keys()].forEach(removePTL);
-  [...toolState.halos.keys()].forEach(removeHalo);
-  if (toolState.rblFirstPPS) toolState.rblFirstPPS.classList.remove("rbl-selected");
-  toolState.rblFirstPPS = null;
-}
-
-export function resetToolState() {
-  clearAllTools();
-  toolState.selectedTool = null;
-  document.querySelectorAll(".tool-btn.active").forEach((button) => button.classList.remove("active"));
-}
-
-function setActiveTool(tool, button, buttons) {
-  if (toolState.rblFirstPPS) {
-    toolState.rblFirstPPS.classList.remove("rbl-selected");
-    toolState.rblFirstPPS = null;
+export class RadarTools {
+  constructor(layer, onChange, onStatus) {
+    this.layer = layer;
+    this.onChange = onChange;
+    this.onStatus = onStatus;
+    this.records = [];
+    this.selectedTool = null;
+    this.pending = null;
+    this.startUtcSeconds = 0;
   }
 
-  const turningOff = button.classList.contains("active");
-  buttons.forEach((candidate) => candidate.classList.remove("active"));
-  toolState.selectedTool = turningOff ? null : tool;
-  if (!turningOff) button.classList.add("active");
-}
+  reset(scenario) {
+    this.layer.replaceChildren();
+    this.records = [];
+    this.pending = null;
+    this.selectedTool = null;
+    this.startUtcSeconds = scenario?.startUtcSeconds ?? 0;
+    this.onStatus("");
+    this.onChange();
+  }
 
-export function setupToolbar() {
-  const toolButtons = [...document.querySelectorAll(".tool-btn")];
-  toolButtons.forEach((button) => {
-    button.addEventListener("click", () => setActiveTool(button.dataset.tool, button, toolButtons));
-  });
+  select(kind) {
+    this.selectedTool = this.selectedTool === kind ? null : kind;
+    this.pending = null;
+    this.onStatus(this.selectedTool ? `Select ${["rbl", "piv"].includes(kind) ? "two targets" : "a target"} for ${kind.toUpperCase()}.` : "");
+    this.onChange();
+  }
 
-  document.getElementById("clear-all-ptl").addEventListener("click", () => {
-    [...toolState.ptls.keys()].forEach(removePTL);
-  });
-  document.getElementById("clear-all-rbl").addEventListener("click", () => {
-    [...toolState.rbls].forEach(removeRBL);
-  });
-  document.getElementById("clear-all-halo").addEventListener("click", () => {
-    [...toolState.halos.keys()].forEach(removeHalo);
-  });
-  document.getElementById("clear-all-tools").addEventListener("click", clearAllTools);
-}
+  cancelSelection() {
+    this.pending = null;
+    this.onStatus("");
+    this.onChange();
+  }
 
-export function handlePPSClick(pps, aircraft, toolsSvg) {
-  if (toolState.selectedTool === "rbl") {
-    if (!toolState.rblFirstPPS) {
-      toolState.rblFirstPPS = pps;
-      pps.classList.add("rbl-selected");
-    } else if (toolState.rblFirstPPS === pps) {
-      pps.classList.remove("rbl-selected");
-      toolState.rblFirstPPS = null;
-    } else {
-      createRBL(toolState.rblFirstPPS, pps, toolsSvg);
-      toolState.rblFirstPPS.classList.remove("rbl-selected");
-      toolState.rblFirstPPS = null;
+  clear(kind) {
+    const removed = this.records.filter(record => !kind || record.kind === kind);
+    removed.forEach(record => record.group.remove());
+    this.records = this.records.filter(record => !removed.includes(record));
+    if (!kind || kind === this.selectedTool) this.pending = null;
+    this.onStatus("");
+    this.onChange();
+  }
+
+  clearForAircraft(aircraft) {
+    for (const record of [...this.records]) {
+      if (record.a.id === aircraft.id || record.b?.id === aircraft.id) this.remove(record);
     }
-    return;
+    if (this.pending?.id === aircraft.id) this.pending = null;
+    this.onStatus("");
+    this.onChange();
   }
 
-  if (toolState.selectedTool === "ptl") createPTL(pps, aircraft, toolsSvg);
-  if (toolState.selectedTool === "halo") createHalo(pps, toolsSvg);
+  remove(record) {
+    record.group.remove();
+    this.records = this.records.filter(item => item !== record);
+    this.onChange();
+  }
+
+  handleTarget(aircraft) {
+    const kind = this.selectedTool;
+    if (!kind) return;
+    if (kind === "rbl" || kind === "piv") {
+      if (!this.pending) {
+        this.pending = aircraft;
+        this.onStatus(`${aircraft.callsign} selected. Select the second target.`);
+        this.onChange();
+        return;
+      }
+      if (this.pending.id === aircraft.id) {
+        this.cancelSelection();
+        return;
+      }
+      const a = this.pending;
+      this.pending = null;
+      this.add(kind, a, aircraft);
+    } else this.add(kind, aircraft);
+    this.onChange();
+  }
+
+  add(kind, a, b) {
+    const key = b ? pairKey(a, b) : a.id;
+    if (this.records.some(record => record.kind === kind && record.key === key)) {
+      this.onStatus(`${kind.toUpperCase()} is already displayed for this selection.`);
+      return;
+    }
+    const prediction = kind === "piv" ? projectedIntercept(a, b) : null;
+    if (kind === "piv" && !prediction) {
+      this.onStatus(`${a.callsign} / ${b.callsign}: no future intercept on the forward tracks.`);
+      return;
+    }
+    const group = svgElement("g", { class: `radar-tool ${kind}-tool`, "data-tool-kind": kind });
+    const title = svgElement("title", {}, `${kind.toUpperCase()}: click a line to remove`);
+    group.append(title);
+    const record = { kind, key, a, b, group, prediction, minutes: DEFAULT_PTL_MINUTES, radiusNm: DEFAULT_HALO_NM };
+    const line = name => {
+      const item = svgElement("line", { class: `tool-line ${kind}-line ${name}` });
+      group.append(item);
+      return item;
+    };
+    const label = (name, text) => {
+      const item = svgElement("text", { class: `tool-label ${kind}-label ${name}` }, text);
+      group.append(item);
+      return item;
+    };
+    if (kind === "piv") {
+      record.lineA = line("piv-vector-a");
+      record.lineB = line("piv-vector-b");
+      record.connector = line("piv-separation");
+      record.labelA = label("piv-distance-a", `${prediction.distanceANm.toFixed(1)} NM`);
+      record.labelB = label("piv-distance-b", `${prediction.distanceBNm.toFixed(1)} NM`);
+      record.separationLabel = label("piv-separation-label", `SEP ${prediction.separationNm.toFixed(1)} NM`);
+      record.timeLabel = label("piv-time", `CPA ${utcTime(this.startUtcSeconds, prediction.timeMinutes).label}`);
+      for (const name of ["endMarkerA", "endMarkerB"]) {
+        record[name] = svgElement("circle", { r: 2.5, class: "piv-endpoint" });
+        group.append(record[name]);
+      }
+      title.textContent = `${a.callsign} / ${b.callsign}: closest approach in ${prediction.timeMinutes.toFixed(2)} min. Click a vector to remove.`;
+    } else if (kind === "halo") {
+      record.circle = svgElement("circle", { class: "tool-line halo-circle" });
+      group.append(record.circle);
+      record.label = label("halo-distance", `${record.radiusNm} NM`);
+    } else {
+      record.line = line("vector");
+      record.label = label("vector-label", "");
+    }
+    group.addEventListener("click", event => {
+      event.stopPropagation();
+      this.remove(record);
+    });
+    this.layer.append(group);
+    this.records.push(record);
+    this.onStatus(`${kind.toUpperCase()} displayed for ${a.callsign}${b ? ` / ${b.callsign}` : ""}.`);
+  }
+
+  handleScroll(aircraft, deltaY) {
+    if (!deltaY) return false;
+    const adjustable = this.records.filter(record => record.a.id === aircraft.id &&
+      ["ptl", "halo"].includes(record.kind));
+    const record = adjustable.find(item => item.kind === this.selectedTool) ??
+      (adjustable.length === 1 ? adjustable[0] : null);
+    if (!record) return false;
+    const direction = deltaY > 0 ? -1 : 1;
+    if (record.kind === "ptl") record.minutes = clamp(record.minutes + direction, 1, 12);
+    else record.radiusNm = clamp(record.radiusNm + direction, 1, 20);
+    this.onChange();
+    return true;
+  }
+
+  render(camera) {
+    const drawLine = (line, start, end) => setSvgLine(line, start.x, start.y, end.x, end.y);
+    const midpointLabel = (label, start, end, offset = -8) =>
+      setAttributes(label, { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 + offset });
+    const legLabel = (label, start, end) => {
+      let angle = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
+      if (angle > 90) angle -= 180;
+      if (angle < -90) angle += 180;
+      setAttributes(label, {
+        x: 0, y: -7,
+        transform: `translate(${(start.x + end.x) / 2} ${(start.y + end.y) / 2}) rotate(${angle})`
+      });
+    };
+    for (const record of this.records) {
+      const start = camera.toScreen(record.a);
+      if (record.kind === "halo") {
+        const radius = nmToPx(record.radiusNm) * camera.zoom;
+        setAttributes(record.circle, { cx: start.x, cy: start.y, r: radius });
+        setAttributes(record.label, { x: start.x, y: start.y - radius - 8 });
+        record.label.textContent = `${record.radiusNm} NM`;
+      } else if (record.kind === "ptl") {
+        const end = camera.toScreen(projectPoint(record.a.x, record.a.y, record.a.heading, record.a.speedKts, record.minutes));
+        drawLine(record.line, start, end);
+        midpointLabel(record.label, start, end);
+        record.label.textContent = `${record.minutes} min`;
+      } else if (record.kind === "rbl") {
+        const end = camera.toScreen(record.b);
+        drawLine(record.line, start, end);
+        midpointLabel(record.label, start, end);
+        record.label.textContent = `${distanceNm(record.a, record.b).toFixed(1)} NM / ${String(Math.round(bearingDegrees(record.a, record.b)) % 360).padStart(3, "0")}°`;
+      } else {
+        const prediction = record.prediction;
+        const startB = camera.toScreen(record.b);
+        const endA = camera.toScreen(prediction.endA);
+        const endB = camera.toScreen(prediction.endB);
+        drawLine(record.lineA, start, endA);
+        drawLine(record.lineB, startB, endB);
+        drawLine(record.connector, endA, endB);
+        legLabel(record.labelA, start, endA);
+        legLabel(record.labelB, startB, endB);
+        midpointLabel(record.separationLabel, endA, endB, 17);
+        setAttributes(record.endMarkerA, { cx: endA.x, cy: endA.y });
+        setAttributes(record.endMarkerB, { cx: endB.x, cy: endB.y });
+        const end = prediction.distanceANm >= prediction.distanceBNm ? endA : endB;
+        setAttributes(record.timeLabel, { x: end.x, y: end.y - 15 });
+      }
+    }
+  }
 }
 
-export function handlePPSScroll(pps, deltaY) {
-  const direction = deltaY > 0 ? -1 : 1;
-
-  if (toolState.selectedTool === "halo" && toolState.halos.has(pps)) {
-    const halo = toolState.halos.get(pps);
-    halo.radiusNm = Math.max(1, Math.min(20, halo.radiusNm + direction));
-    updateHalo(pps, halo);
-    return true;
-  }
-
-  if (toolState.selectedTool === "ptl" && toolState.ptls.has(pps)) {
-    const ptl = toolState.ptls.get(pps);
-    ptl.minutes = Math.max(1, Math.min(12, ptl.minutes + direction));
-    updatePTL(pps, ptl);
-    return true;
-  }
-
-  if (toolState.ptls.has(pps) && !toolState.halos.has(pps)) {
-    const ptl = toolState.ptls.get(pps);
-    ptl.minutes = Math.max(1, Math.min(12, ptl.minutes + direction));
-    updatePTL(pps, ptl);
-    return true;
-  }
-
-  if (toolState.halos.has(pps) && !toolState.ptls.has(pps)) {
-    const halo = toolState.halos.get(pps);
-    halo.radiusNm = Math.max(1, Math.min(20, halo.radiusNm + direction));
-    updateHalo(pps, halo);
-    return true;
-  }
-
-  return false;
-}
