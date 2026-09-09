@@ -1,4 +1,4 @@
-import { nmToPx, normalizeHeading, setAttributes, svgElement } from "./utils.js";
+import { mapColor, nmToPx, normalizeHeading, normalizeTheme, setAttributes, svgElement } from "./utils.js";
 
 const LINE_PATTERNS = new Set(["solid", "dashed", "dotted", "hashed"]);
 const POINT_SHAPES = new Set(["circle", "square", "triangle", "diamond", "cross"]);
@@ -412,7 +412,7 @@ function strokeAttributes(style) {
   const attributes = {
     class: "map-stroke",
     fill: "none",
-    stroke: style.color,
+    stroke: "currentColor",
     "stroke-width": style.width,
     "stroke-linecap": style.pattern === "dotted" ? "round" : "butt",
     "stroke-linejoin": "round",
@@ -423,8 +423,9 @@ function strokeAttributes(style) {
 }
 
 export class MapRenderer {
-  constructor(root, map) {
+  constructor(root, map, theme = "blue") {
     this.records = [];
+    this.theme = normalizeTheme(theme);
     for (const layer of map.layers) {
       const layerElement = svgElement("g", { class: "map-layer", "data-map-layer": layer.name });
       root.append(layerElement);
@@ -432,27 +433,35 @@ export class MapRenderer {
     }
   }
 
+  setTheme(theme) {
+    this.theme = normalizeTheme(theme);
+    for (const { group, feature } of this.records) {
+      group.setAttribute("color", mapColor(feature.style.color, this.theme));
+    }
+  }
+
   createRecord(layer, feature) {
     const group = svgElement("g", {
       class: `map-feature map-${feature.kind}`,
       opacity: feature.style.opacity,
+      color: mapColor(feature.style.color, this.theme),
     });
     layer.append(group);
 
     if (feature.kind === "point") {
       const marker = svgElement("path", {
         class: "map-point-marker",
-        fill: feature.style.filled && feature.style.shape !== "cross" ? feature.style.color : "none",
-        stroke: feature.style.color,
+        fill: feature.style.filled && feature.style.shape !== "cross" ? "currentColor" : "none",
+        stroke: "currentColor",
         "stroke-width": feature.style.width,
         "stroke-linejoin": "round",
       });
       const label = feature.style.label
-        ? svgElement("text", { class: "map-label", fill: feature.style.color }, feature.style.label)
+        ? svgElement("text", { class: "map-label", fill: "currentColor" }, feature.style.label)
         : null;
       group.append(marker);
       if (label) group.append(label);
-      return { feature, marker, label };
+      return { group, feature, marker, label };
     }
 
     const stroke = svgElement("path", strokeAttributes(feature.style));
@@ -460,14 +469,14 @@ export class MapRenderer {
       ? svgElement("path", {
         class: "map-hashes",
         fill: "none",
-        stroke: feature.style.color,
+        stroke: "currentColor",
         "stroke-width": feature.style.width,
         "stroke-linecap": "round",
       })
       : null;
     group.append(stroke);
     if (hashes) group.append(hashes);
-    return { feature, stroke, hashes };
+    return { group, feature, stroke, hashes };
   }
 
   render(camera) {

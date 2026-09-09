@@ -6,7 +6,7 @@ import { RadarTools } from "./tools.js";
 import { clamp, getClosestPointOnRect, nmToPx, projectPoint, setAttributes, setSvgLine, svgElement } from "./utils.js";
 
 export class RadarView {
-  constructor(svg, bounds, { map = null, onStatus = () => { }, onToolsChange = () => { } } = {}) {
+  constructor(svg, bounds, { map = null, theme = "blue", onStatus = () => { }, onToolsChange = () => { } } = {}) {
     this.svg = svg;
     this.bounds = bounds;
     this.camera = new Camera(bounds);
@@ -20,7 +20,7 @@ export class RadarView {
     defs.append(this.pattern);
     this.background = svgElement("rect", { width: "100%", height: "100%", fill: "url(#radar-grid-pattern)" });
     this.mapLayer = svgElement("g", { id: "map-layer", "aria-hidden": "true" });
-    this.mapRenderer = map ? new MapRenderer(this.mapLayer, map) : null;
+    this.mapRenderer = map ? new MapRenderer(this.mapLayer, map, theme) : null;
     this.layers = {};
     for (const name of ["tools", "leaders", "trails", "targets", "tags"]) {
       this.layers[name] = svgElement("g", { id: `${name}-layer` });
@@ -42,6 +42,10 @@ export class RadarView {
     this.camera.resize(initialRect.width, initialRect.height);
     setAttributes(svg, { viewBox: `0 0 ${this.camera.width} ${this.camera.height}` });
     this.bindNavigation();
+  }
+
+  setTheme(theme) {
+    this.mapRenderer?.setTheme(theme);
   }
 
   createScale() {

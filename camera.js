@@ -1,4 +1,3 @@
-
 import { MIN_ZOOM, MAX_ZOOM } from "./constants.js";
 import { clamp } from "./utils.js";
 

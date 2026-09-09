@@ -32,7 +32,7 @@
 }
 
 .leader-line {
-  stroke: rgba(66, 200, 233, .55);
+  stroke: var(--leader);
   stroke-width: 1;
   pointer-events: none;
 }
@@ -63,7 +63,7 @@
 
 .pps:hover .target-symbol,
 .pps:focus-visible .target-symbol {
-  stroke: #fff2c1;
+  stroke: var(--target-hover);
   stroke-width: 2.5;
 }
 
@@ -82,8 +82,8 @@
 }
 
 .tag-background {
-  fill: rgba(4, 18, 28, .86);
-  stroke: rgba(66, 200, 233, .28);
+  fill: var(--tag-bg);
+  stroke: var(--tag-border);
   stroke-width: 1;
 }
 
@@ -92,7 +92,7 @@
 }
 
 .tag-row {
-  fill: #bfe9f5;
+  fill: var(--tag-text);
   font: 12px "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   white-space: pre;
   pointer-events: none;
@@ -182,7 +182,7 @@
 }
 
 .scale-background {
-  fill: rgba(6, 24, 38, .85);
+  fill: var(--scale-bg);
 }
 
 .scale-line {

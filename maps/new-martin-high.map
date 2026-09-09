@@ -1,0 +1,95 @@
+# Fictional high-level en-route map inspired by the density and hierarchy of
+# Great Lakes navigation charts. Coordinates and radii are nautical miles.
+
+MAP "New Martin High"
+SIZE 270 250
+
+# Major high-altitude sector boundaries.
+LAYER sectors
+STYLE color=#FFC000 opacity=0.72 width=1.5 pattern=solid
+
+# MI
+LINE 0 57 31 31
+LINE 31 31 75 45
+LINE 75 45 110 135
+LINE 110 135 145 154
+LINE 145 154 143 180
+LINE 143 180 138 190
+LINE 138 190 75 200
+LINE 75 200 62 198
+LINE 62 198 10 186
+
+# SH
+LINE 31 31 0 0
+
+# XI
+LINE 75 45 100 20
+LINE 100 20 250 0
+LINE 145 154 170 134
+LINE 170 134 218 126
+LINE 218 126 270 124
+
+# PI
+LINE 138 190 175 200
+LINE 175 200 195 250
+LINE 195 250 235 260
+
+# BA
+LINE 175 200 245 190
+LINE 245 190 265 183
+
+# LU
+LINE 75 200 72 234
+LINE 72 234 60 256
+LINE 60 256 65 289
+
+# Minor high-altitude sector boundaries.
+LAYER sectors
+STYLE color=#FFC000 opacity=0.72 width=1.5 pattern=dashed
+
+LINE 110 135 82 148
+LINE 82 148 62 198
+
+LINE 175 200 218 126
+
+# New Martin range rings: five dashed rings at 10 NM intervals.
+LAYER range-rings
+STYLE color=#d7e4e6 opacity=0.20 width=0.7 pattern=dotted filled=false
+CIRCLE 138 131 10
+CIRCLE 138 131 20
+CIRCLE 138 131 30
+CIRCLE 138 131 40
+CIRCLE 138 131 50
+
+# Minor-airport range rings: three dotted rings at 10 NM intervals.
+LAYER range-rings
+STYLE color=#d7e4e6 opacity=0.20 width=0.7 pattern=dotted filled=false
+
+# West Bay
+CIRCLE 29 142 10
+CIRCLE 29 142 20
+CIRCLE 29 142 30
+
+# West Harbour
+CIRCLE 59 128 10
+CIRCLE 59 128 20
+CIRCLE 59 128 30
+
+# North Point
+CIRCLE 137 66 10
+CIRCLE 137 66 20
+CIRCLE 137 66 30
+
+# South Field
+CIRCLE 216 231 10
+CIRCLE 216 231 20
+CIRCLE 216 231 30
+
+# Aerodromes and sector labels use distinct symbols.
+LAYER aerodromes
+STYLE color=#d7e4e6 opacity=0.95 width=1.2 shape=circle size=3 filled=false
+POINT 138 131 label="NEW MARTIN" size=7
+POINT 29 142 label="CROW ISLAND"
+POINT 59 128 label="BAGEL BAY"
+POINT 137 66 label="ACORN HILL"
+POINT 216 231 label="GHOST FIELD"

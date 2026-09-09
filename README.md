@@ -4,7 +4,11 @@ A dependency-free browser application for practising conflict recognition with s
 
 ## Running
 
-Extract the entire ZIP into a folder, then serve that folder:
+Copy the updated files into your existing project folder, replacing files with the same names. Keep your existing `maps/new-martin-high.map`: that custom map was not in the attachments, and `main.js` still loads it.
+
+The attachment named `map.test.js` actually contained North Channel map text. It is included under the correct path, `maps/north-channel.map`. To run this update in a fresh folder without your custom map, set `MAP_FILES` in `main.js` to `["./maps/north-channel.map"]`.
+
+Serve the project folder:
 
 ```bash
 python -m http.server 8000
@@ -18,13 +22,13 @@ https://james-crowley-to.github.io/ATCSim/
 
 ## Radar and navigation
 
-The included North Channel map covers a fictitious 76 NM square. Drag empty radar space to pan; wheel zoom is centred on the cursor. The +/− buttons also zoom. Reset view restores the initial coverage. Resizing preserves the world point at the viewport centre and the relative zoom.
+The configured New Martin map is loaded from your existing `maps/new-martin-high.map`. The included North Channel sample covers a fictitious 76 NM square. Drag empty radar space to pan; wheel zoom is centred on the cursor. The +/− buttons also zoom. Reset view restores the initial coverage. Resizing preserves the world point at the viewport centre and the relative zoom.
 
 One SVG renders the radar. Its viewBox matches the display dimensions, so one SVG unit equals one CSS pixel. The camera converts world positions to screen positions explicitly. Text, target symbols, history dots and stroke widths remain constant in screen size; map geometry and measured distances expand with zoom. No CSS-scaled parent, raster layer or `will-change: transform` is used.
 
 Rendering is scheduled once per animation frame when something changes. SVG elements are reused, text is measured only when a new tag is created, and scale ticks are retained. Nothing redraws continuously while the scenario is idle.
 
-Drag data tags to reposition them. Their offsets remain in screen pixels at every zoom level. All map geometry beneath the traffic comes from `maps/north-channel.map` rather than being hard-coded in the renderer.
+Drag data tags to reposition them. Their offsets remain in screen pixels at every zoom level. All map geometry beneath the traffic comes from the files listed in `MAP_FILES` in `main.js`.
 
 At most one background aircraft begins outside the opening view. Each eligible placement has a 16% off-screen chance; the aircraft points towards the centre and still passes conflict validation. Most aircraft, including intentional conflict pairs, start in view.
 
@@ -65,9 +69,25 @@ Every drawing command may override the active style. Lines, arcs and circles sup
 
 To use another base map, change `MAP_FILES` in `main.js`. Additional files in that list are loaded as overlays in list order. Overlay files use the same `SIZE`; layers with the same name are combined. Parser errors identify the offending filename and line number.
 
+## Themes
+
+Use the Theme selector in the header to switch between Blue, Black and Light. The selected theme is remembered in this browser. If browser storage is unavailable, theme switching still works for the current page.
+
+Blue retains the original interface and authored map colours. Black uses a true black radar background and bright highlighter colours. Light uses pale surfaces and darker map, target, label and tool colours. Theme changes preserve the current scenario, warnings, open answer, camera position, tag offsets and radar tools.
+
+Map lines, hashes, points, filled markers and labels use the same per-feature colour. In Black and Light, their hues and alpha are retained while tone and saturation are adjusted for readability. Map opacity, geometry, line patterns and point styles are unchanged. Hex and RGB colours work directly; the browser also resolves named colours and HSL. Theme-aware CSS variables remain as authored. Returning to Blue restores the exact authored colours.
+
+## Warning assessment
+
+Click any flight strip to toggle its warning. A marked strip shows a red W in its centre and a red highlighting border. The strips are native buttons, so Tab followed by Enter or Space also works.
+
+Reveal answer checks the warning selection against every unique aircraft in the scenario's conflict pairs, using aircraft IDs. All required aircraft marked means a pass and a congratulations message. Extra warnings are accepted. Any missing aircraft prevents a pass, and the revealed answer names those aircraft alongside the existing conflict details.
+
+The displayed result describes the warnings **at reveal**. Hiding and revealing the answer checks the current selection again. A new scenario or difficulty change clears all warnings and the previous result. Clearing radar tools does not clear strip warnings.
+
 ## Clock and flight strips
 
-The clock above the grey flight strips is a random UTC time, fixed for the lifetime of the static scenario. It is not a live clock. New scenario generates a new time.
+The clock above the flight strips is a random UTC time, fixed for the lifetime of the static scenario. It is not a live clock. New scenario generates a new time.
 
 Strips show each aircraft's UTC time of closest approach to the original radar centre, even when its track does not pass exactly through that point. They are sorted by the full signed time offset, not their formatted time strings. Panning, zooming and resizing do not alter the reference or reorder the strips.
 
@@ -118,7 +138,9 @@ No PIV is drawn for non-intersecting forward tracks, a closest approach already 
 - Radar navigation: drag, wheel, +/− buttons, Reset view.
 - With radar focused: arrow keys pan, +/− zoom, Home resets.
 - With a target focused: Enter or Space applies the selected tool.
-- Reveal answer: show the validated conflict pairs, loss times and CPA separation.
+- Flight-strip warning: click a strip, or focus it and press Enter or Space.
+- Theme: select Blue, Black or Light in the header.
+- Reveal answer: assess marked aircraft and show the validated conflict pairs, loss times and CPA separation.
 
 ## Separation model
 
@@ -138,7 +160,7 @@ With Node.js installed:
 npm test
 ```
 
-The tests cover the map grammar, style inheritance and overrides, overlay merging, geometry rendering, map-file loading and parser error reporting.
+The included dependency-free Node tests cover exact and extra warning selections, missing aircraft, shared aircraft across conflict pairs, strip toggling and reveal feedback, theme preference handling, colour tokens, and map theming without geometry or source-data changes. They use a small DOM test double; they do not perform browser layout or visual tests.
 
 ## Files
 
@@ -151,9 +173,11 @@ The tests cover the map grammar, style inheritance and overrides, overlay mergin
 - `aircraft.js`: aircraft generation, cleared levels and shared display rows.
 - `scenarios.js`: bounded scenario generation and conflict validation.
 - `utils.js`: geometry, time formatting, projection, level-off and SVG helpers.
-- `ui.js`: clock, strips, briefing and answer panel.
+- `ui.js`: clock, interactive warning strips, briefing and answer assessment panel.
+- `assessment.js`: aircraft-ID-based warning assessment.
+- `theme.js`: theme preference, selector and map colour adaptation.
 - `constants.js`: units, performance envelopes and exercise settings.
 - `index.html`, `style.css`, `pps.css`: shell, layout and SVG symbology.
-- `tests/`: calculation and tool-state checks.
+- `tests/`: warning, UI, theme and map checks.
 
 This is a geometric training aid. Performance envelopes are approximate, the boundary is decorative, and the model does not include turns, wind, acceleration, surveillance uncertainty, procedural separation or real operational clearance handling.

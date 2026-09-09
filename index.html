@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="blue">
 
 <head>
   <meta charset="UTF-8" />
@@ -7,6 +7,13 @@
   <meta name="description"
     content="A static radar scenario generator for practising air traffic conflict recognition and problem solving." />
   <title>ATC Problem-Solving Trainer</title>
+  <script>
+    // Restore the preference before styles paint; blocked storage is harmless.
+    try {
+      const theme = localStorage.getItem("atc-trainer-theme");
+      if (["blue", "black", "light"].includes(theme)) document.documentElement.dataset.theme = theme;
+    } catch { }
+  </script>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="pps.css" />
 </head>
@@ -19,8 +26,18 @@
         <h1>Conflict Recognition Trainer</h1>
       </div>
       <div class="scenario-controls">
-        <label for="difficultySelect">Difficulty</label>
-        <select id="difficultySelect" aria-label="Scenario difficulty"></select>
+        <div class="control-field">
+          <label for="themeSelect">Theme</label>
+          <select id="themeSelect">
+            <option value="blue">Blue</option>
+            <option value="black">Black</option>
+            <option value="light">Light</option>
+          </select>
+        </div>
+        <div class="control-field">
+          <label for="difficultySelect">Difficulty</label>
+          <select id="difficultySelect" aria-label="Scenario difficulty"></select>
+        </div>
         <button id="nextScenarioBtn" class="primary-btn" type="button" title="New scenario (N)">
           New scenario
         </button>
@@ -32,12 +49,13 @@
         <div id="scenario-meta" class="scenario-meta"></div>
         <p id="scenario-objective" class="scenario-objective"></p>
       </div>
-      <button id="revealSolutionBtn" class="secondary-btn" type="button" aria-expanded="false">
+      <button id="revealSolutionBtn" class="secondary-btn" type="button" aria-expanded="false"
+        aria-controls="solution-panel">
         Reveal answer
       </button>
     </section>
 
-    <div id="solution-panel" class="solution-panel" hidden></div>
+    <div id="solution-panel" class="solution-panel" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 
     <section class="workspace">
       <aside id="toolbar" class="toolbar" aria-label="Radar tools">
@@ -100,6 +118,7 @@
           <span>Flight strips</span>
           <small>Centre crossing</small>
         </div>
+        <p id="strip-help" class="strip-help">Click a strip to toggle a warning before revealing the answer.</p>
         <div id="flight-strips"></div>
       </aside>
     </section>
