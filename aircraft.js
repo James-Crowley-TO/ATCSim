@@ -8,7 +8,15 @@ function generateRegistration() {
 }
 export function generateCallsign() {
   if (Math.random() < 0.12) return generateRegistration();
-  return `${randomChoice(CALLSIGN_OPERATORS)}${randomInt(1, 9999)}`;
+
+  const roll = Math.random();
+  const number = roll < 0.8
+    ? randomInt(100, 999)
+    : roll < 0.9
+      ? randomInt(10, 99)
+      : randomInt(1000, 9999);
+
+  return `${randomChoice(CALLSIGN_OPERATORS)}${number}`;
 }
 function compatibleAircraftTypes({ aircraftType, speedKts, flightLevel }) {
   return Object.entries(AIRCRAFT_TYPES).filter(([type, data]) =>
@@ -97,8 +105,10 @@ export function isAircraftComplete(aircraft) {
 }
 
 export function createAircraftDraft(point) {
-  return { id: createId(), callsign: "", aircraftType: "", x: point.x, y: point.y,
-    heading: null, speedKts: null, flightLevel: null, verticalRateFpm: 0, clearedFlightLevel: null };
+  return {
+    id: createId(), callsign: "", aircraftType: "", x: point.x, y: point.y,
+    heading: null, speedKts: null, flightLevel: null, verticalRateFpm: 0, clearedFlightLevel: null
+  };
 }
 
 // Accept partially specified traffic without inventing operational values.
@@ -137,7 +147,7 @@ export function validateAircraftInput(input, original, otherAircraft = []) {
   else {
     check("clearedFlightLevel", FLIGHT_LEVELS[0], model?.maxFlightLevel ?? 510, true);
     if (Number.isFinite(aircraft.flightLevel) && Number.isFinite(aircraft.clearedFlightLevel) &&
-        Number.isFinite(aircraft.verticalRateFpm) && (aircraft.clearedFlightLevel - aircraft.flightLevel) * aircraft.verticalRateFpm <= 0) {
+      Number.isFinite(aircraft.verticalRateFpm) && (aircraft.clearedFlightLevel - aircraft.flightLevel) * aircraft.verticalRateFpm <= 0) {
       errors.clearedFlightLevel = "Clearance must be above a climbing aircraft or below a descending aircraft.";
     }
   }

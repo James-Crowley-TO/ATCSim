@@ -19,24 +19,59 @@ export const MAX_ZOOM = 2.6;
 // Simplified performance envelopes. They are intentionally approximate: the
 // application is a conflict-recognition exercise, not an aircraft performance model.
 export const AIRCRAFT_TYPES = {
-  B744: { minSpeedKts: 390, maxSpeedKts: 510, maxFlightLevel: 450, maxVerticalRateFpm: 2000 },
-  A333: { minSpeedKts: 370, maxSpeedKts: 490, maxFlightLevel: 410, maxVerticalRateFpm: 2200 },
-  B763: { minSpeedKts: 350, maxSpeedKts: 470, maxFlightLevel: 430, maxVerticalRateFpm: 2500 },
-  A343: { minSpeedKts: 360, maxSpeedKts: 470, maxFlightLevel: 410, maxVerticalRateFpm: 2000 },
-  GLF5: { minSpeedKts: 380, maxSpeedKts: 500, maxFlightLevel: 510, maxVerticalRateFpm: 3000 },
-  CRJ9: { minSpeedKts: 300, maxSpeedKts: 460, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
-  B738: { minSpeedKts: 320, maxSpeedKts: 470, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
-  E190: { minSpeedKts: 300, maxSpeedKts: 450, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
-  A320: { minSpeedKts: 300, maxSpeedKts: 460, maxFlightLevel: 410, maxVerticalRateFpm: 2300 },
-  DH8C: { minSpeedKts: 180, maxSpeedKts: 270, maxFlightLevel: 250, maxVerticalRateFpm: 1300 },
-  DH8D: { minSpeedKts: 200, maxSpeedKts: 360, maxFlightLevel: 250, maxVerticalRateFpm: 2000 },
-  B190: { minSpeedKts: 170, maxSpeedKts: 280, maxFlightLevel: 250, maxVerticalRateFpm: 1500 },
-  SW4: { minSpeedKts: 160, maxSpeedKts: 260, maxFlightLevel: 250, maxVerticalRateFpm: 1200 },
-  C208: { minSpeedKts: 140, maxSpeedKts: 185, maxFlightLevel: 250, maxVerticalRateFpm: 700 },
-  BE9L: { minSpeedKts: 160, maxSpeedKts: 250, maxFlightLevel: 300, maxVerticalRateFpm: 1200 },
-  PC12: { minSpeedKts: 180, maxSpeedKts: 285, maxFlightLevel: 300, maxVerticalRateFpm: 1200 },
-  C550: { minSpeedKts: 280, maxSpeedKts: 420, maxFlightLevel: 430, maxVerticalRateFpm: 1800 },
-  PA31: { minSpeedKts: 150, maxSpeedKts: 230, maxFlightLevel: 240, maxVerticalRateFpm: 900 },
+  // Boeing airliners
+  B737: { minSpeedKts: 310, maxSpeedKts: 460, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
+  B739: { minSpeedKts: 320, maxSpeedKts: 470, maxFlightLevel: 410, maxVerticalRateFpm: 2300 },
+  B38M: { minSpeedKts: 320, maxSpeedKts: 470, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
+  B752: { minSpeedKts: 340, maxSpeedKts: 480, maxFlightLevel: 420, maxVerticalRateFpm: 3000 },
+  B77L: { minSpeedKts: 380, maxSpeedKts: 510, maxFlightLevel: 430, maxVerticalRateFpm: 2500 },
+  B77W: { minSpeedKts: 380, maxSpeedKts: 510, maxFlightLevel: 430, maxVerticalRateFpm: 2300 },
+  B788: { minSpeedKts: 380, maxSpeedKts: 510, maxFlightLevel: 430, maxVerticalRateFpm: 2500 },
+  B789: { minSpeedKts: 380, maxSpeedKts: 510, maxFlightLevel: 430, maxVerticalRateFpm: 2500 },
+  B748: { minSpeedKts: 390, maxSpeedKts: 520, maxFlightLevel: 430, maxVerticalRateFpm: 2200 },
+
+  // Airbus airliners
+  A319: { minSpeedKts: 300, maxSpeedKts: 460, maxFlightLevel: 390, maxVerticalRateFpm: 2500 },
+  A321: { minSpeedKts: 310, maxSpeedKts: 470, maxFlightLevel: 390, maxVerticalRateFpm: 2200 },
+  A20N: { minSpeedKts: 300, maxSpeedKts: 460, maxFlightLevel: 390, maxVerticalRateFpm: 2500 },
+  A21N: { minSpeedKts: 310, maxSpeedKts: 470, maxFlightLevel: 390, maxVerticalRateFpm: 2300 },
+  A332: { minSpeedKts: 370, maxSpeedKts: 490, maxFlightLevel: 410, maxVerticalRateFpm: 2400 },
+  A359: { minSpeedKts: 380, maxSpeedKts: 510, maxFlightLevel: 430, maxVerticalRateFpm: 2500 },
+  A35K: { minSpeedKts: 380, maxSpeedKts: 510, maxFlightLevel: 410, maxVerticalRateFpm: 2300 },
+  A388: { minSpeedKts: 380, maxSpeedKts: 510, maxFlightLevel: 430, maxVerticalRateFpm: 2000 },
+
+  // A220 and regional jets
+  BCS1: { minSpeedKts: 300, maxSpeedKts: 460, maxFlightLevel: 410, maxVerticalRateFpm: 2700 },
+  BCS3: { minSpeedKts: 300, maxSpeedKts: 470, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
+  CRJ2: { minSpeedKts: 280, maxSpeedKts: 430, maxFlightLevel: 410, maxVerticalRateFpm: 2000 },
+  CRJ7: { minSpeedKts: 300, maxSpeedKts: 450, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
+  CRJX: { minSpeedKts: 300, maxSpeedKts: 460, maxFlightLevel: 410, maxVerticalRateFpm: 2300 },
+  E145: { minSpeedKts: 280, maxSpeedKts: 430, maxFlightLevel: 370, maxVerticalRateFpm: 2200 },
+  E170: { minSpeedKts: 290, maxSpeedKts: 450, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
+  E175: { minSpeedKts: 290, maxSpeedKts: 450, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
+  E195: { minSpeedKts: 300, maxSpeedKts: 450, maxFlightLevel: 410, maxVerticalRateFpm: 2300 },
+  E295: { minSpeedKts: 300, maxSpeedKts: 460, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
+
+  // Business jets
+  CL35: { minSpeedKts: 330, maxSpeedKts: 470, maxFlightLevel: 450, maxVerticalRateFpm: 3000 },
+  CL60: { minSpeedKts: 320, maxSpeedKts: 460, maxFlightLevel: 410, maxVerticalRateFpm: 2500 },
+  GLEX: { minSpeedKts: 370, maxSpeedKts: 500, maxFlightLevel: 510, maxVerticalRateFpm: 3000 },
+  GLF6: { minSpeedKts: 380, maxSpeedKts: 530, maxFlightLevel: 510, maxVerticalRateFpm: 3500 },
+  FA7X: { minSpeedKts: 350, maxSpeedKts: 500, maxFlightLevel: 510, maxVerticalRateFpm: 3000 },
+  C56X: { minSpeedKts: 300, maxSpeedKts: 440, maxFlightLevel: 450, maxVerticalRateFpm: 2500 },
+  C750: { minSpeedKts: 370, maxSpeedKts: 530, maxFlightLevel: 510, maxVerticalRateFpm: 3500 },
+  E55P: { minSpeedKts: 280, maxSpeedKts: 450, maxFlightLevel: 450, maxVerticalRateFpm: 3000 },
+  LJ45: { minSpeedKts: 300, maxSpeedKts: 460, maxFlightLevel: 510, maxVerticalRateFpm: 3000 },
+
+  // Turboprops
+  AT43: { minSpeedKts: 170, maxSpeedKts: 280, maxFlightLevel: 250, maxVerticalRateFpm: 1500 },
+  AT76: { minSpeedKts: 180, maxSpeedKts: 280, maxFlightLevel: 250, maxVerticalRateFpm: 1500 },
+  DH8A: { minSpeedKts: 170, maxSpeedKts: 250, maxFlightLevel: 250, maxVerticalRateFpm: 1500 },
+  SF34: { minSpeedKts: 180, maxSpeedKts: 280, maxFlightLevel: 250, maxVerticalRateFpm: 1500 },
+  BE20: { minSpeedKts: 180, maxSpeedKts: 290, maxFlightLevel: 350, maxVerticalRateFpm: 1800 },
+  BE30: { minSpeedKts: 190, maxSpeedKts: 310, maxFlightLevel: 350, maxVerticalRateFpm: 2000 },
+  TBM9: { minSpeedKts: 200, maxSpeedKts: 330, maxFlightLevel: 310, maxVerticalRateFpm: 2000 },
+  P180: { minSpeedKts: 230, maxSpeedKts: 400, maxFlightLevel: 410, maxVerticalRateFpm: 2200 },
 };
 
 export const FLIGHT_LEVELS = [
@@ -46,8 +81,28 @@ export const FLIGHT_LEVELS = [
 ];
 
 export const CALLSIGN_OPERATORS = [
-  "AAL", "ACA", "BAW", "CAV", "CFC", "DAL", "DLH", "EIN", "FDX",
-  "JAL", "JZA", "KAL", "ROU", "TGO", "UPS", "WJA",
+  // Canadian
+  "ACA", "JZA", "ROU", "WJA", "WEN", "POE", "TSC", "FLE",
+  "JBO", "CJT", "BFL", "MPE", "AKT", "CAV", "CFC", "TGO",
+
+  // United States
+  "AAL", "DAL", "UAL", "SWA", "JBU", "ASA", "FFT", "NKS",
+  "AAY", "SKW", "RPA", "ENY", "EDV", "JIA", "EJA",
+
+  // Europe
+  "BAW", "VIR", "AFR", "KLM", "DLH", "SWR", "AUA", "BEL",
+  "EIN", "IBE", "TAP", "LOT", "SAS", "FIN", "ICE", "THY",
+
+  // Asia, Middle East, and Oceania
+  "JAL", "ANA", "KAL", "AAR", "CPA", "EVA", "CAL", "SIA",
+  "CCA", "CES", "CSN", "AIC", "UAE", "ETD", "QTR", "SVA",
+  "QFA", "ANZ",
+
+  // Latin America and Africa
+  "AMX", "CMP", "AVA", "LAN", "TAM", "ETH", "MSR", "RAM",
+
+  // Cargo
+  "FDX", "UPS", "GTI", "PAC", "ABX", "ATN", "CLX", "BOX",
 ];
 
 export const DIFFICULTIES = ["easy", "medium", "hard"];
