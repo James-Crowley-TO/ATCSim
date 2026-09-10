@@ -1,6 +1,6 @@
-# ATC Conflict Recognition Trainer — Sandbox Update
+# ATC Conflict Recognition Trainer
 
-A dependency-free extension of the supplied JavaScript/SVG application. Normal Mode, Sandbox Mode and Map-Maker share the existing camera, aircraft objects, themes, map DSL and renderer.
+A conflict recognition training workspace for ATC.
 
 ## Run Online
 
