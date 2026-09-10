@@ -11,7 +11,7 @@
     // Restore the preference before styles paint; blocked storage is harmless.
     try {
       const theme = localStorage.getItem("atc-trainer-theme");
-      if (["blue", "black", "light"].includes(theme)) document.documentElement.dataset.theme = theme;
+      if (["blue", "black", "light", "dusk", "chart"].includes(theme)) document.documentElement.dataset.theme = theme;
     } catch { }
   </script>
   <link rel="stylesheet" href="style.css" />
