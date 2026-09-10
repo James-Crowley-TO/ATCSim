@@ -92,7 +92,7 @@ function hasConflictWithAny(candidate, existing, lookaheadMinutes) {
 
 function chooseConflictFlightLevel() {
   // High enough to resemble an en-route display while still allowing regional aircraft.
-  return randomChoice(FLIGHT_LEVELS.filter((level) => level >= 240 && level <= 390));
+  return randomChoice(FLIGHT_LEVELS.filter((level) => level >= 240 && level <= 410));
 }
 
 function createIntentionalPair(bounds, config, existingAircraft) {
@@ -126,12 +126,37 @@ function createIntentionalPair(bounds, config, existingAircraft) {
     aircraftB.x = conflictPoint.x - futureB.x;
     aircraftB.y = conflictPoint.y - futureB.y;
 
+    const offset = projectPoint(
+      0, 0, randomBetween(0, 360), 60, randomBetween(0.5, 4)
+    );
+    aircraftB.x += offset.x;
+    aircraftB.y += offset.y;
+
     if (!isInsideBounds(aircraftA, bounds, RADAR_PADDING_PX)) continue;
     if (!isInsideBounds(aircraftB, bounds, RADAR_PADDING_PX)) continue;
     if (distanceNm(aircraftA, aircraftB) < HORIZONTAL_SEPARATION_NM + 2) continue;
 
+    const climbRate = 500;
+    const startLevel = Math.round(
+      flightLevel - climbRate * timeToConflict / 100
+    );
+    const clearedLevel = flightLevel + 10;
+    const model = AIRCRAFT_TYPES[aircraftA.aircraftType];
+
+    if (
+      chance(0.5) &&
+      startLevel >= FLIGHT_LEVELS[0] &&
+      clearedLevel <= model.maxFlightLevel &&
+      climbRate <= model.maxVerticalRateFpm
+    ) {
+      aircraftA.flightLevel = startLevel;
+      aircraftA.clearedFlightLevel = clearedLevel;
+      aircraftA.verticalRateFpm = climbRate;
+    }
+
     const plannedPrediction = predictConflict(aircraftA, aircraftB, config.lookaheadMinutes);
     if (!plannedPrediction.willConflict) continue;
+    if (plannedPrediction.firstLossMinutes < 6) continue;
     if (hasConflictWithAny(aircraftA, existingAircraft, config.lookaheadMinutes)) continue;
     if (hasConflictWithAny(aircraftB, existingAircraft, config.lookaheadMinutes)) continue;
 
@@ -143,7 +168,15 @@ function createIntentionalPair(bounds, config, existingAircraft) {
 
 function createDistractor(bounds, config, existingAircraft) {
   for (let attempt = 0; attempt < DISTRACTOR_ATTEMPTS; attempt += 1) {
-    const aircraft = createAircraft(bounds, RADAR_PADDING_PX, { verticalRateFpm: 0 });
+    const sharedLevel =
+      existingAircraft.length > 0 && chance(0.75)
+        ? randomChoice(existingAircraft).clearedFlightLevel
+        : undefined;
+
+    const aircraft = createAircraft(bounds, RADAR_PADDING_PX, {
+      verticalRateFpm: 0,
+      ...(sharedLevel === undefined ? {} : { flightLevel: sharedLevel }),
+    });
 
     if (!existingAircraft.some(a => !isInsideBounds(a, bounds)) && chance(OFFSCREEN_TRAFFIC_CHANCE)) {
       const marginX = bounds.width * OFFSCREEN_MARGIN_RATIO;
@@ -179,13 +212,30 @@ function createDistractor(bounds, config, existingAircraft) {
 }
 
 function validateScenario(aircraft, intentionalPairs, config) {
-  const predicted = findPredictedConflicts(aircraft, config.lookaheadMinutes);
-  if (predicted.length !== intentionalPairs.length) return null;
+  const predicted = findPredictedConflicts(
+    aircraft,
+    config.lookaheadMinutes
+  );
 
-  const predictedKeys = new Set(predicted.map((conflict) => pairKey(conflict.aircraftA, conflict.aircraftB)));
-  const intentionalKeys = intentionalPairs.map(([a, b]) => pairKey(a, b));
-  if (!intentionalKeys.every((key) => predictedKeys.has(key))) return null;
-  return predicted;
+  // Apply the minimum lead time to every conflict,
+  // including incidental conflicts between different groups.
+  if (predicted.some(conflict => conflict.firstLossMinutes < 6)) {
+    return null;
+  }
+
+  // Every planted conflict must still exist.
+  // Additional conflicts are now permitted.
+  const predictedKeys = new Set(
+    predicted.map(conflict =>
+      pairKey(conflict.aircraftA, conflict.aircraftB)
+    )
+  );
+
+  const intendedPresent = intentionalPairs.every(([a, b]) =>
+    predictedKeys.has(pairKey(a, b))
+  );
+
+  return intendedPresent ? predicted : null;
 }
 
 export function generateScenario(difficulty, bounds) {

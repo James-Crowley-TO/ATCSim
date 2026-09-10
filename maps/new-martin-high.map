@@ -1,7 +1,7 @@
 # Fictional high-level en-route map 
 
 MAP "New Martin High"
-SIZE 170 150
+SIZE 270 250
 
 LAYER sectors
 STYLE color="#FFC000" opacity=0.72 width=1.5 pattern="dashed" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
