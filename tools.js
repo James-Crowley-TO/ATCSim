@@ -1,4 +1,5 @@
 import { DEFAULT_HALO_NM, DEFAULT_PTL_MINUTES } from "./constants.js";
+import { isAircraftComplete } from "./aircraft.js";
 import {
     bearingDegrees, distanceNm, nmToPx, projectPoint, projectedIntercept,
     setAttributes, setSvgLine, svgElement, utcTime, clamp
@@ -65,6 +66,7 @@ export class RadarTools {
     }
 
     handleTarget(aircraft) {
+        if (!isAircraftComplete(aircraft)) return;
         const kind = this.selectedTool;
         if (!kind) return;
         if (kind === "rbl" || kind === "piv") {
@@ -154,6 +156,24 @@ export class RadarTools {
         return true;
     }
 
+    refreshForAircraft(aircraft) {
+        for (const record of [...this.records]) {
+            if (record.a.id !== aircraft.id && record.b?.id !== aircraft.id) continue;
+            if (!isAircraftComplete(record.a) || (record.b && !isAircraftComplete(record.b))) {
+                this.remove(record); continue;
+            }
+            if (record.kind !== "piv") continue;
+            record.prediction = projectedIntercept(record.a, record.b);
+            if (!record.prediction) { this.remove(record); continue; }
+            const p = record.prediction;
+            record.labelA.textContent = `${p.distanceANm.toFixed(1)} NM`;
+            record.labelB.textContent = `${p.distanceBNm.toFixed(1)} NM`;
+            record.separationLabel.textContent = `SEP ${p.separationNm.toFixed(1)} NM`;
+            record.timeLabel.textContent = `CPA ${utcTime(this.startUtcSeconds, p.timeMinutes).label}`;
+            record.group.querySelector("title").textContent = `${record.a.callsign} / ${record.b.callsign}: closest approach in ${p.timeMinutes.toFixed(2)} min. Click a vector to remove.`;
+        }
+    }
+
     render(camera) {
         const drawLine = (line, start, end) => setSvgLine(line, start.x, start.y, end.x, end.y);
         const midpointLabel = (label, start, end, offset = -8) =>
@@ -203,4 +223,3 @@ export class RadarTools {
         }
     }
 }
-

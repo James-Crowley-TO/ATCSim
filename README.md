@@ -1,183 +1,141 @@
-# ATC Conflict Recognition Trainer
+# ATC Conflict Recognition Trainer — Sandbox Update
 
-A dependency-free browser application for practising conflict recognition with static en-route radar snapshots. Each scenario contains validated intentional conflicts and background traffic.
+A dependency-free extension of the supplied JavaScript/SVG application. Normal Mode, Sandbox Mode and Map-Maker share the existing camera, aircraft objects, themes, map DSL and renderer.
 
-## Running
+## Install and run
 
-Copy the updated files into your existing project folder, replacing files with the same names. Keep your existing `maps/new-martin-high.map`: that custom map was not in the attachments, and `main.js` still loads it.
+Extract the complete bundle and run it from its `atc-sandbox` directory. When updating an existing checkout, copy **all** files in this directory, including the new JavaScript modules and the `maps/` directory. Preserve any additional custom maps you already have.
 
-The attachment named `map.test.js` actually contained North Channel map text. It is included under the correct path, `maps/north-channel.map`. To run this update in a fresh folder without your custom map, set `MAP_FILES` in `main.js` to `["./maps/north-channel.map"]`.
-
-Serve the project folder:
+With Node.js:
 
 ```bash
-python -m http.server 8000
+npm run dev
 ```
 
-Open http://localhost:8000 in a browser. JavaScript modules require a local server; opening `index.html` directly is not supported. No package installation or build step is required.
+Then open `http://localhost:8000`. Alternatively, serve this directory with `python -m http.server 8000`. No package installation or build step is needed. Opening `index.html` directly with `file://` does not support the application's module imports and map loading.
 
+The included New Martin map loads by default, with North Channel as a fallback. Both supplied map files are included at the paths expected by `main.js`. If neither file loads, an empty map remains available so the editing modes still work.
 
-Also hosted here:
-https://james-crowley-to.github.io/ATCSim/
+## Modes
 
-## Radar and navigation
+Use the labelled mode buttons above the radar. Clicking **Exit Sandbox Mode** returns to Normal. **Exit Map-Maker Mode** returns to the mode used before entering Map-Maker. You can also select Normal or Sandbox explicitly.
 
-The configured New Martin map is loaded from your existing `maps/new-martin-high.map`. The included North Channel sample covers a fictitious 76 NM square. Drag empty radar space to pan; wheel zoom is centred on the cursor. The +/− buttons also zoom. Reset view restores the initial coverage. Resizing preserves the world point at the viewport centre and the relative zoom.
+Mode switches preserve aircraft objects, saved edits, warning selections, scenario time, answer state, camera view and data-tag offsets. Entering Map-Maker from Sandbox exits Sandbox and clears its measurements. Applied map edits stay in the session when Map-Maker is closed.
 
-One SVG renders the radar. Its viewBox matches the display dimensions, so one SVG unit equals one CSS pixel. The camera converts world positions to screen positions explicitly. Text, target symbols, history dots and stroke widths remain constant in screen size; map geometry and measured distances expand with zoom. No CSS-scaled parent, raster layer or `will-change: transform` is used.
+The supplied trainer uses static snapshots: there is no aircraft-motion or scenario-progression timer. Map-Maker blocks scenario controls and the N shortcut. New scenarios are generated only by explicit normal scenario actions, including the existing initial generation on page startup.
 
-Rendering is scheduled once per animation frame when something changes. SVG elements are reused, text is measured only when a new tag is created, and scale ticks are retained. Nothing redraws continuously while the scenario is idle.
+**Empty session** removes the current traffic and scenario after confirmation. This provides an empty radar for building traffic in Sandbox. New scenario and difficulty changes retain their original generation behavior; replacing saved aircraft edits requires confirmation. Failed generation preserves the current session.
 
-Drag data tags to reposition them. Their offsets remain in screen pixels at every zoom level. All map geometry beneath the traffic comes from the files listed in `MAP_FILES` in `main.js`.
+## Sandbox tools
 
-At most one background aircraft begins outside the opening view. Each eligible placement has a 16% off-screen chance; the aircraft points towards the centre and still passes conflict validation. Most aircraft, including intentional conflict pairs, start in view.
+| Tool | Placement | Result |
+| --- | --- | --- |
+| Ruler | Click the start, then the endpoint. | Distance in NM, shown to two decimal places. |
+| Protractor | Click the vertex, a point on ray 1, then a point on ray 2. | Clockwise angle from ray 1 to ray 2, from 0° up to 360°, displayed to one decimal place. North-to-east is 90°; east-to-north is 270°. |
+| Place aircraft | Click the desired radar position. | A draft PPS and aircraft editor. Save commits it; Cancel or Escape removes the draft. |
 
-## Map DSL
+Multiple measurements coexist without an application limit. They use world coordinates, so panning and zooming do not change their values. They measure fixed positions; they are not attached to aircraft.
 
-Maps are ordinary text files. The DSL is deliberately small: one command per line, whitespace-separated values, and `key=value` style options. Blank lines and lines beginning with `#` or `//` are ignored. Quotation marks allow labels and map names to contain spaces.
+The active tool is highlighted, and the status line explains the next click. **Cancel placement**, Escape, or right-clicking empty radar space cancels the current unfinished placement. **Clear measurements** removes completed measurements too. Selecting the active sandbox tool again deselects it. All measurements and previews disappear when leaving Sandbox.
 
-Coordinates and radii are in nautical miles. `(0, 0)` is the upper-left corner, X increases eastward, and Y increases southward. Arc bearings are degrees clockwise from north. Stroke widths, point sizes and hash dimensions are screen pixels, so symbology remains legible at every zoom level.
+Drag the radar to pan, including while a placement tool is selected. A movement threshold distinguishes a click from a drag; dragging never places a measurement or element. The wheel zooms around the cursor in the editing modes. Data tags can still be dragged independently in Sandbox. Normal PTL/halo wheel adjustment resumes in Normal Mode.
+
+## Aircraft editor
+
+In Sandbox, right-click an aircraft PPS to edit it. A focused PPS can also be edited with Enter or Space. Existing values are populated; IDs are displayed read-only.
+
+The editor exposes every editable field in the supplied aircraft model:
+
+- Callsign and supported aircraft type.
+- X/east and Y/south position, presented in nautical miles.
+- Heading, clockwise from north; 360° is normalized to 000°.
+- Speed in knots, flight level, vertical rate in feet/minute, and cleared flight level.
+
+A strip requires callsign, aircraft type, position, heading, speed, flight level, vertical rate and a reachable cleared level. Blank optional fields may be saved as incomplete traffic. Such an aircraft has a dashed PPS, an **INCOMPLETE** tag, and no flight strip. Once all fields are supplied, Save creates exactly one strip. At zero vertical rate, clearance is derived from the current flight level and is read-only. For climbing or descending aircraft, clearance must be in the correct direction.
+
+Validation uses the existing simplified type envelopes. The editor displays speed, altitude and vertical-rate limits for the chosen type. It rejects duplicate callsigns, invalid numbers, unsupported types, and unreachable clearances. Errors leave entered values intact. Cancel never changes an existing aircraft, and cancelling initial placement adds no aircraft to the session.
+
+Saved edits immediately refresh the PPS, shared tag/strip rows, history dots, centre-crossing estimate and affected target-tool geometry. Repeated saves update the same aircraft ID. Existing warning selections and dragged tag offsets remain. If an aircraft becomes incomplete, its strip is removed until it is complete again; its warning selection remains associated with its ID.
+
+## Scenario answers after aircraft changes
+
+Generated conflict pairs and CPA values describe the original aircraft geometry. A saved aircraft addition or change marks that answer **out of date**, hides any revealed result and disables Reveal answer. A visible notice explains why.
+
+**Recalculate answer** explicitly runs the existing conflict predictor on the saved aircraft using the same scenario look-ahead and separation rules. It does not regenerate traffic, overwrite edits, clear warnings, reset the view or change the clock. Every aircraft must be complete first. Free sessions without a generated scenario have no answer to grade.
+
+The original warning workflow remains: all required aircraft marked means a pass, and additional warnings are allowed. If recalculation produces zero conflicts, there are no required warning marks. Normal PTL, RBL and halo geometry follows saved aircraft values. PIV predictions are refreshed after edits; an existing PIV is removed if its forward tracks no longer have a valid future intercept. Tools for incomplete traffic are removed.
+
+## Map-Maker
+
+Only map geometry and map/navigation controls are displayed. Aircraft, tags, strips, scenario briefing, answer panel, warning notice and aircraft tools are hidden while their session state is retained.
+
+| Tool | Click order |
+| --- | --- |
+| Select | Click an element near its stroke or marker. The element list can select crowded or overlapping features precisely. |
+| Line | Start, endpoint. |
+| Circle | Centre, radius endpoint. |
+| Arc | Centre, start point (sets radius and start bearing), end bearing. The arc sweeps clockwise. |
+| Point | Position. |
+
+Choose the layer for new elements before placement. Add a layer with a name beginning with a letter, followed by letters, digits, underscores or hyphens. An empty map can be edited by adding its first layer.
+
+After placement, review the cyan preview and use **Apply element** to commit it. The inspector also edits selected elements. Geometry inputs use NM; bearings use degrees clockwise from north. The supported properties are colour, opacity, line width, line pattern, hash spacing/length, point shape, size, rotation, fill and label, where applicable. The element's layer can be changed. **Delete element** or Delete with the radar focused removes the selection. Cancel/Escape discards unapplied element changes.
+
+The **Map name and dimensions** section edits MAP/SIZE metadata. Changing size changes coverage for future scenarios and Reset view, without changing aircraft coordinates or the original centre reference of an existing scenario. Panning and zooming work throughout selection and placement.
+
+Applied edits are retained when leaving Map-Maker. Unapplied inspector changes prompt before being discarded; choose **Keep changes** to stay and apply them. Exiting never requires downloading a file.
+
+### Save and load
+
+**Save Map** downloads a `.map` file. Apply or cancel outstanding form changes first. The download contains the current applied map, its name and size, layers, layer defaults, geometry, and effective feature styles. The map remains editable after downloading.
+
+**Load Map** opens a local file picker. Parsing completes before replacement. Invalid files show a filename and line-number error without replacing the map. Replacing a map with unsaved changes requires confirmation: **Keep changes** cancels replacement, while **Continue** replaces it. A late file read is ignored after leaving Map-Maker.
+
+The saved DSL is compatible with the normal application. Copy a saved map into `maps/` and update `MAP_FILES` in `main.js` to make it the startup map. Loading through Map-Maker also makes it the current normal-mode map immediately, without a reload.
+
+Serialization preserves supported content rather than exact source formatting. Comments are retained together at the top; STYLE declarations are materialized per feature to preserve style changes within a layer. Layer defaults are also retained. Empty maps and empty layers are valid so deleting the last element still produces a reloadable map. Source filenames and original line numbers remain diagnostic information, not map metadata.
+
+## Existing map DSL
 
 ```text
-MAP "Example Sector"
-SIZE 76 76
+MAP "Example sector"
+SIZE 100 100
 
 LAYER routes
-STYLE color=#75a9ba opacity=0.4 width=1 pattern=dashed
-LINE 8 60 38 38
-ARC 38 38 20 220 40 pattern=hashed hash-spacing=16 hash-length=6
-CIRCLE 38 38 10 pattern=dotted
+STYLE color=#75a9ba opacity=0.6 width=1.2 pattern=dashed
+LINE 10 80 50 50
+ARC 50 50 20 220 40 pattern=hashed hash-spacing=16 hash-length=6
+CIRCLE 50 50 10 pattern=dotted
 
 LAYER fixes
-STYLE color=#9ad9e8 opacity=0.85 width=1.2 shape=triangle size=5
-POINT 38 38 label="CENTRE" filled=true
-POINT 54 27 label=EAST shape=square rotation=45
+STYLE color=#9ad9e8 opacity=0.85 shape=triangle size=5
+POINT 50 50 label="CENTRE" filled=true
 ```
 
-| Command | Arguments | Purpose |
-| --- | --- | --- |
-| `MAP` | name | Declares the map name. |
-| `SIZE` | width height | Sets map dimensions in NM. |
-| `LAYER` | name | Selects or creates a named drawing layer. |
-| `STYLE` | options | Changes defaults for subsequent features in that layer. |
-| `LINE` | x1 y1 x2 y2 | Draws a straight segment. |
-| `ARC` | centreX centreY radius start end | Draws a clockwise circular arc. |
-| `CIRCLE` | centreX centreY radius | Draws a complete circle. |
-| `POINT` | x y | Draws a point marker and optional label. |
+Coordinates and radii are in NM; origin is the upper-left corner, with X increasing east and Y south. Widths, marker sizes and hash dimensions are screen pixels. Patterns: solid, dashed, dotted, hashed. Point shapes: circle, square, triangle, diamond, cross. Colours accept browser CSS colours. Arc sweeps must be nonzero; use CIRCLE for a full circle.
 
-Every drawing command may override the active style. Lines, arcs and circles support `pattern=solid`, `dashed`, `dotted`, or `hashed`; hashed geometry receives real perpendicular tick marks. Shared options are `color`, `opacity`, and `width`. Points additionally support `shape=circle`, `square`, `triangle`, `diamond`, or `cross`, plus `size`, `rotation`, `filled`, and `label`. Hashed geometry accepts `hash-spacing` and `hash-length`.
+## Implementation and files
 
-To use another base map, change `MAP_FILES` in `main.js`. Additional files in that list are loaded as overlays in list order. Overlay files use the same `SIZE`; layers with the same name are combined. Parser errors identify the offending filename and line number.
+`Session` is the authoritative aircraft/scenario state. Editing existing aircraft mutates the shared object only after validation, so tool references, tags and strips cannot fork into independent aircraft copies. The radar owns one set of navigation handlers and dispatches clicks to the active mode. Switching modes cancels pointer capture and pending tools without calling scenario regeneration or camera reset.
 
-## Themes
+New modules:
 
-Use the Theme selector in the header to switch between Blue, Black and Light. The selected theme is remembered in this browser. If browser storage is unavailable, theme switching still works for the current page.
+- `session.js`: session, mode, aircraft identity and explicit answer recalculation.
+- `sandbox.js`: world-anchored measurements and placement previews.
+- `aircraft-editor.js`: draft editing and Save/Cancel lifecycle.
+- `map-editor.js`: placement, selection, inspector and atomic file load/save.
+- `map-document.js`: DSL serialization, placement geometry and camera-aware hit testing.
+- `editor-ui.js`, `confirm-dialog.js`: labelled fields, errors and themed confirmations.
+- `dev-server.js`: optional dependency-free local server.
+- `tests/`: model, geometry, serialization and controller regression tests.
+- `VERIFICATION.md`: results and testing limitations.
 
-Blue retains the original interface and authored map colours. Black uses a true black radar background and bright highlighter colours. Light uses pale surfaces and darker map, target, label and tool colours. Theme changes preserve the current scenario, warnings, open answer, camera position, tag offsets and radar tools.
+Changed existing files: `aircraft.js`, `assessment.js`, `constants.js`, `index.html`, `main.js`, `map.js`, `package.json`, `pps.css`, `radar.js`, `README.md`, `style.css`, `tools.js`, and `ui.js`.
 
-Map lines, hashes, points, filled markers and labels use the same per-feature colour. In Black and Light, their hues and alpha are retained while tone and saturation are adjusted for readability. Map opacity, geometry, line patterns and point styles are unchanged. Hex and RGB colours work directly; the browser also resolves named colours and HSL. Theme-aware CSS variables remain as authored. Returning to Blue restores the exact authored colours.
+The supplied `assessment.js` contained test code. It is restored as the intended production assessment module, shared by `ui.js`; the stray assessment copy in `constants.js` is removed. The supplied `scenarios.js`, `camera.js`, `theme.js`, `utils.js`, and both map files otherwise remain unchanged.
 
-## Warning assessment
+## Tests and limits
 
-Click any flight strip to toggle its warning. A marked strip shows a red W in its centre and a red highlighting border. The strips are native buttons, so Tab followed by Enter or Space also works.
+Run `npm test`, or `node --test tests/*.test.js`. See `VERIFICATION.md` for the 22 passing tests and browser observations.
 
-Reveal answer checks the warning selection against every unique aircraft in the scenario's conflict pairs, using aircraft IDs. All required aircraft marked means a pass and a congratulations message. Extra warnings are accepted. Any missing aircraft prevents a pass, and the revealed answer names those aircraft alongside the existing conflict details.
-
-The displayed result describes the warnings **at reveal**. Hiding and revealing the answer checks the current selection again. A new scenario or difficulty change clears all warnings and the previous result. Clearing radar tools does not clear strip warnings.
-
-## Clock and flight strips
-
-The clock above the flight strips is a random UTC time, fixed for the lifetime of the static scenario. It is not a live clock. New scenario generates a new time.
-
-Strips show each aircraft's UTC time of closest approach to the original radar centre, even when its track does not pass exactly through that point. They are sorted by the full signed time offset, not their formatted time strings. Panning, zooming and resizing do not alter the reference or reorder the strips.
-
-Times include seconds and a Z suffix for UTC. Estimates across midnight show `(+1d)` or `(−1d)`. Every aircraft has a strip, including off-screen aircraft; use the strips to guide your radar scan.
-
-## Cleared levels
-
-An aircraft changing altitude always has a valid cleared flight level in the direction of travel and within its simplified performance envelope. The clearance appears in purple above the callsign on both its radar tag and its flight strip:
-
-```text
-360
-CFC2841
-410 ↓10 46
-A343
-```
-
-This represents FL410 descending at 1,000 ft/min, cleared to FL360, at a displayed speed code of 46 (460 kt). The strip and radar use the same formatting function. Level aircraft omit the extra clearance row.
-
-Conflict predictions stop a climb or descent at the assigned clearance. They do not extrapolate vertical speed beyond the level-off.
-
-## Tools
-
-| Tool | Selection | Display |
-| --- | --- | --- |
-| PTL | One target | Projected track for an adjustable 1–12 minutes. |
-| RBL | Two targets | Current horizontal range and bearing from the first target to the second. |
-| Halo | One target | Adjustable 1–20 NM distance ring. |
-| PIV | Two targets | Both projected vectors to their simultaneous future closest approach. |
-
-Scroll over a target to adjust its active PTL or halo; this takes priority over camera zoom. If both tools exist, select the one to adjust. Right-click a target to clear all its tools. Click a tool line to remove that tool. Clear buttons remove a tool category or every tool.
-
-PIV first checks that the two **forward tracks intersect**, including collinear head-on or overtaking traffic. It then calculates the exact common future time that minimises horizontal distance:
-
-```text
-r = positionB − positionA
-v = velocityB − velocityA
-tCPA = −dot(r, v) / dot(v, v)
-```
-
-This is not either aircraft's independent arrival time at the geometric crossing. Each vector ends at its aircraft's position at tCPA. Distances flown appear along the respective vectors; a dashed connector shows the endpoint separation; the UTC CPA time appears at the end of the longer vector. The two endpoints need not coincide.
-
-No PIV is drawn for non-intersecting forward tracks, a closest approach already passed, or equal velocities with no unique future intercept. A status message explains unsuccessful selections. Near-parallel cases use numerical tolerances. PIV is horizontal geometry and has no separation threshold or scenario look-ahead cap; an intercept can be vertically separated or outside the assessment window.
-
-## Controls
-
-- New scenario: button or N.
-- Pair selection: click two targets; click the first again or press Escape to cancel.
-- Radar navigation: drag, wheel, +/− buttons, Reset view.
-- With radar focused: arrow keys pan, +/− zoom, Home resets.
-- With a target focused: Enter or Space applies the selected tool.
-- Flight-strip warning: click a strip, or focus it and press Enter or Space.
-- Theme: select Blue, Black or Light in the header.
-- Reveal answer: assess marked aircraft and show the validated conflict pairs, loss times and CPA separation.
-
-## Separation model
-
-A conflict requires simultaneous separation below 5 NM horizontally and 1,000 ft vertically within the assessment window. Horizontal speed and heading are constant; vertical motion stops at the clearance. The conflict predictor samples every three seconds. PIV's horizontal CPA is analytic, so its time can differ slightly from the sampled answer.
-
-| Difficulty | Aircraft | Intentional conflicts | Look-ahead |
-| --- | ---: | ---: | ---: |
-| Easy | 4–6 | 1 | 8 min |
-| Medium | 7–9 | 2 | 10 min |
-| Hard | 10–13 | 3 | 12 min |
-
-## Tests
-
-With Node.js installed:
-
-```bash
-npm test
-```
-
-The included dependency-free Node tests cover exact and extra warning selections, missing aircraft, shared aircraft across conflict pairs, strip toggling and reveal feedback, theme preference handling, colour tokens, and map theming without geometry or source-data changes. They use a small DOM test double; they do not perform browser layout or visual tests.
-
-## Files
-
-- `main.js`: application setup and scenario lifecycle.
-- `map.js`: map DSL parser, overlay merger and reusable SVG renderer.
-- `maps/north-channel.map`: editable map geometry and symbology.
-- `radar.js`: traffic SVG elements, display coordinates, navigation, tag dragging and frame scheduling.
-- `camera.js`: pure camera coordinate transformations.
-- `tools.js`: PTL, RBL, halo and PIV state and SVG geometry.
-- `aircraft.js`: aircraft generation, cleared levels and shared display rows.
-- `scenarios.js`: bounded scenario generation and conflict validation.
-- `utils.js`: geometry, time formatting, projection, level-off and SVG helpers.
-- `ui.js`: clock, interactive warning strips, briefing and answer assessment panel.
-- `assessment.js`: aircraft-ID-based warning assessment.
-- `theme.js`: theme preference, selector and map colour adaptation.
-- `constants.js`: units, performance envelopes and exercise settings.
-- `index.html`, `style.css`, `pps.css`: shell, layout and SVG symbology.
-- `tests/`: warning, UI, theme and map checks.
-
-This is a geometric training aid. Performance envelopes are approximate, the boundary is decorative, and the model does not include turns, wind, acceleration, surveillance uncertainty, procedural separation or real operational clearance handling.
+Blue, Black and Light use the existing theme tokens; new controls, errors, confirmations and measurements follow them. Aircraft and map edits persist for the current session only, as requested. The existing sampled conflict model, aircraft envelopes, camera zoom bounds and static scenario semantics remain in place. This update does not add physics, live motion or a new scenario catalogue.

@@ -1,20 +1,8 @@
-import { aircraftTagRows } from "./aircraft.js";
+import { aircraftTagRows, isAircraftComplete } from "./aircraft.js";
 import { centreCrossingMinutes, normalizeHeading, utcTime } from "./utils.js";
 
-export function evaluateWarnings(scenario, warningIds = new Set()) {
-    const required = new Map();
-    for (const { aircraftA, aircraftB } of scenario.conflicts) {
-        required.set(aircraftA.id, aircraftA);
-        required.set(aircraftB.id, aircraftB);
-    }
-    const missingAircraft = [...required.values()].filter(aircraft => !warningIds.has(aircraft.id));
-    return {
-        passed: missingAircraft.length === 0,
-        requiredCount: required.size,
-        markedCount: required.size - missingAircraft.length,
-        missingAircraft,
-    };
-}
+export { evaluateWarnings } from "./assessment.js";
+import { evaluateWarnings } from "./assessment.js";
 
 function element(tagName, className = "", text = "") {
     const node = document.createElement(tagName);
@@ -80,6 +68,7 @@ export function renderFlightStrips(scenario, bounds, warningIds = new Set()) {
 
     const centre = { x: bounds.width / 2, y: bounds.height / 2 };
     const orderedAircraft = scenario.aircraft
+        .filter(isAircraftComplete)
         .map(aircraft => ({
             aircraft,
             crossingMinutes: centreCrossingMinutes(aircraft, centre),

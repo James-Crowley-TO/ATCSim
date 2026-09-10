@@ -1,5 +1,5 @@
 import { AIRCRAFT_TYPES, CALLSIGN_OPERATORS, FLIGHT_LEVELS } from "./constants.js";
-import { createId, normalizeHeading, randomBetween, randomChoice, randomInt, randomLetters } from "./utils.js";
+import { createId, nmToPx, normalizeHeading, randomBetween, randomChoice, randomInt, randomLetters } from "./utils.js";
 
 function generateRegistration() {
   if (Math.random() < 0.7) return `C${randomChoice(["F", "G"])}${randomLetters(3)}`;
@@ -73,6 +73,11 @@ export function createAircraft(bounds, pad, overrides = {}) {
 
 // Shared rows keep the radar and flight-strip clearance/state presentation equal.
 export function aircraftTagRows(aircraft) {
+  if (!isAircraftComplete(aircraft)) return [
+    { text: aircraft.callsign || "NEW AIRCRAFT", kind: "callsign" },
+    { text: "INCOMPLETE", kind: "state" },
+    { text: aircraft.aircraftType || "No flight strip", kind: "type" },
+  ];
   const rows = [];
   if (aircraft.verticalRateFpm !== 0) rows.push({ text: String(aircraft.clearedFlightLevel), kind: "clearance" });
   rows.push({ text: aircraft.callsign, kind: "callsign" });
@@ -84,3 +89,61 @@ export function aircraftTagRows(aircraft) {
   return rows;
 }
 
+export const AIRCRAFT_FIELDS = ["callsign", "aircraftType", "x", "y", "heading", "speedKts", "flightLevel", "verticalRateFpm", "clearedFlightLevel"];
+
+export function isAircraftComplete(aircraft) {
+  return Boolean(aircraft.callsign && AIRCRAFT_TYPES[aircraft.aircraftType]) &&
+    AIRCRAFT_FIELDS.slice(2).every(key => Number.isFinite(aircraft[key]));
+}
+
+export function createAircraftDraft(point) {
+  return { id: createId(), callsign: "", aircraftType: "", x: point.x, y: point.y,
+    heading: null, speedKts: null, flightLevel: null, verticalRateFpm: 0, clearedFlightLevel: null };
+}
+
+// Accept partially specified traffic without inventing operational values.
+// A level aircraft's clearance is derived; all other identifiers/derived displays
+// are deliberately absent from the editable field whitelist.
+export function validateAircraftInput(input, original, otherAircraft = []) {
+  const aircraft = { ...original };
+  const errors = {};
+  aircraft.callsign = String(input.callsign ?? "").trim().toUpperCase();
+  aircraft.aircraftType = String(input.aircraftType ?? "").trim().toUpperCase();
+  if (aircraft.callsign && !/^[A-Z0-9][A-Z0-9-]{0,15}$/.test(aircraft.callsign)) {
+    errors.callsign = "Use 1–16 letters, digits or hyphens, starting with a letter or digit.";
+  }
+  if (aircraft.callsign && otherAircraft.some(item => item.id !== original.id && item.callsign === aircraft.callsign)) {
+    errors.callsign = "Another aircraft already uses this callsign.";
+  }
+  const model = AIRCRAFT_TYPES[aircraft.aircraftType];
+  if (aircraft.aircraftType && !model) errors.aircraftType = "Choose a supported aircraft type.";
+  for (const key of AIRCRAFT_FIELDS.slice(2)) {
+    const text = String(input[key] ?? "").trim();
+    aircraft[key] = text === "" ? null : Number(text);
+    if (text && !Number.isFinite(aircraft[key])) errors[key] = "Enter a finite number.";
+  }
+  for (const key of ["x", "y"]) if (aircraft[key] === null) errors[key] = "Position is required (NM).";
+  const check = (key, min, max, integer = false) => {
+    const value = aircraft[key];
+    if (value !== null && (!Number.isFinite(value) || value < min || value > max || (integer && !Number.isInteger(value)))) {
+      errors[key] = `Enter ${integer ? "a whole number" : "a number"} from ${min} to ${max}.`;
+    }
+  };
+  check("heading", 0, 360);
+  check("speedKts", model?.minSpeedKts ?? 1, model?.maxSpeedKts ?? 2000);
+  check("flightLevel", FLIGHT_LEVELS[0], model?.maxFlightLevel ?? 510, true);
+  check("verticalRateFpm", -(model?.maxVerticalRateFpm ?? 10000), model?.maxVerticalRateFpm ?? 10000, true);
+  if (aircraft.verticalRateFpm === 0) aircraft.clearedFlightLevel = aircraft.flightLevel;
+  else {
+    check("clearedFlightLevel", FLIGHT_LEVELS[0], model?.maxFlightLevel ?? 510, true);
+    if (Number.isFinite(aircraft.flightLevel) && Number.isFinite(aircraft.clearedFlightLevel) &&
+        Number.isFinite(aircraft.verticalRateFpm) && (aircraft.clearedFlightLevel - aircraft.flightLevel) * aircraft.verticalRateFpm <= 0) {
+      errors.clearedFlightLevel = "Clearance must be above a climbing aircraft or below a descending aircraft.";
+    }
+  }
+  if (Number.isFinite(aircraft.heading)) aircraft.heading = normalizeHeading(aircraft.heading);
+  // The editor presents NM; the established aircraft model stores world pixels.
+  aircraft.x = nmToPx(aircraft.x);
+  aircraft.y = nmToPx(aircraft.y);
+  return { aircraft, errors, valid: Object.keys(errors).length === 0 };
+}

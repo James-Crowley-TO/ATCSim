@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="pps.css" />
 </head>
 
-<body>
+<body data-mode="normal">
   <main class="app-shell">
     <header class="app-header">
       <div>
@@ -34,15 +34,27 @@
             <option value="light">Light</option>
           </select>
         </div>
-        <div class="control-field">
+        <div class="control-field scenario-only">
           <label for="difficultySelect">Difficulty</label>
           <select id="difficultySelect" aria-label="Scenario difficulty"></select>
         </div>
-        <button id="nextScenarioBtn" class="primary-btn" type="button" title="New scenario (N)">
+        <button id="nextScenarioBtn" class="primary-btn scenario-only" type="button" title="New scenario (N)">
           New scenario
         </button>
+        <button id="emptySessionBtn" class="secondary-btn scenario-only" type="button">Empty session</button>
       </div>
     </header>
+
+    <nav class="mode-switch" aria-label="Application mode">
+      <button data-mode="normal" class="mode-btn active" type="button" aria-pressed="true">Normal Mode</button>
+      <button data-mode="sandbox" class="mode-btn" type="button" aria-pressed="false">Sandbox Mode</button>
+      <button data-mode="mapmaker" class="mode-btn" type="button" aria-pressed="false">Map-Maker Mode</button>
+      <span id="mode-help">Static scenario · Practice conflict recognition</span>
+    </nav>
+    <section id="aircraft-change-notice" class="session-notice" hidden>
+      <span id="answer-edit-message"></span>
+      <button id="recalculateAnswerBtn" class="secondary-btn" type="button">Recalculate answer</button>
+    </section>
 
     <section class="briefing" aria-live="polite">
       <div>
@@ -95,6 +107,44 @@
         </p>
       </aside>
 
+      <aside id="sandbox-toolbar" class="toolbar" aria-label="Sandbox tools" hidden>
+        <div class="tool-section">
+          <span class="tool-heading">Tools</span>
+          <button class="tool-btn" data-sandbox-tool="ruler" type="button" aria-pressed="false">Ruler</button>
+          <button class="tool-btn" data-sandbox-tool="angle" type="button" aria-pressed="false">Protractor</button>
+          <button class="tool-btn" data-sandbox-tool="aircraft" type="button" aria-pressed="false">Place
+            aircraft</button>
+        </div>
+        <div class="tool-section">
+          <span class="tool-heading">Clear</span>
+          <button id="cancelMeasurementBtn" class="action-btn" type="button">Placement</button>
+          <button id="clearMeasurementsBtn" class="action-btn" type="button">Tools</button>
+        </div>
+
+        <p class="tool-help">
+          Ruler: two clicks. Protractor: vertex, first ray, second ray; clockwise 0–360°. Right-click
+          a PPS to edit. Escape cancels placement. Saved aircraft stay; measurements clear on exit.
+        </p>
+      </aside>
+
+      <aside id="map-toolbar" class="toolbar" aria-label="Map tools" hidden>
+        <div class="tool-section">
+          <span class="tool-heading">Map tools</span>
+          <button class="tool-btn" data-map-tool="select" type="button" aria-pressed="true">Select</button>
+          <button class="tool-btn" data-map-tool="line" type="button" aria-pressed="false">Line</button>
+          <button class="tool-btn" data-map-tool="arc" type="button" aria-pressed="false">Arc</button>
+          <button class="tool-btn" data-map-tool="circle" type="button" aria-pressed="false">Circle</button>
+          <button class="tool-btn" data-map-tool="point" type="button" aria-pressed="false">Point</button>
+        </div>
+        <button id="cancelMapPlacementBtn" class="action-btn" type="button">Cancel placement</button>
+        <button id="saveMapBtn" class="primary-btn" type="button">Save Map</button>
+        <button id="loadMapBtn" class="secondary-btn" type="button">Load Map</button>
+        <input id="map-file-input" type="file" accept=".map,.txt,text/plain" hidden />
+        <p id="map-save-status" class="tool-help" role="status"></p>
+        <p class="tool-help">Click to place; drag to pan. Escape or right-click empty space cancels placement. Bearings
+          run clockwise from north. Review geometry and Apply element to keep it.</p>
+      </aside>
+
       <div class="radar-wrap">
         <div id="radar-screen">
           <svg id="radar-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
@@ -121,9 +171,69 @@
         <p id="strip-help" class="strip-help">Click a strip to toggle a warning before revealing the answer.</p>
         <div id="flight-strips"></div>
       </aside>
+      <aside id="map-inspector" class="map-inspector" aria-label="Map inspector" hidden>
+        <h2>Map inspector</h2>
+        <div id="map-errors" class="editor-errors" role="alert" hidden></div>
+        <details>
+          <summary>Map name and dimensions</summary>
+          <form id="map-metadata-form" novalidate>
+            <label class="editor-field"><span>Map name</span><input id="map-name" /></label>
+            <div class="editor-grid">
+              <label class="editor-field"><span>Width (NM)</span><input id="map-width" type="number"
+                  step="any" /></label>
+              <label class="editor-field"><span>Height (NM)</span><input id="map-height" type="number"
+                  step="any" /></label>
+            </div>
+            <button class="secondary-btn" type="submit">Apply map details</button>
+          </form>
+        </details>
+        <label class="editor-field"><span>Layer for new elements</span><select id="map-layer-select"></select></label>
+        <div class="layer-create">
+          <label class="editor-field"><span>New layer name</span><input id="new-map-layer"
+              placeholder="e.g. approaches" /></label>
+          <button id="addMapLayerBtn" class="secondary-btn" type="button">Add layer</button>
+        </div>
+        <label class="editor-field"><span>Element list (all layers)</span><select
+            id="map-feature-select"></select></label>
+        <p id="map-selection-help">Select an element on the radar or choose a tool to add one.</p>
+        <form id="map-element-form" novalidate hidden>
+          <h3 id="map-element-title">Edit element</h3>
+          <div id="map-element-fields" class="editor-grid"></div>
+          <div class="editor-actions">
+            <button class="primary-btn" type="submit">Apply element</button>
+            <button id="cancelMapElementBtn" class="secondary-btn" type="button">Cancel</button>
+            <button id="deleteMapElementBtn" class="secondary-btn danger" type="button">Delete element</button>
+          </div>
+        </form>
+      </aside>
     </section>
   </main>
 
+  <dialog id="aircraft-dialog" aria-labelledby="aircraft-dialog-title" aria-describedby="aircraft-completeness">
+    <form id="aircraft-form" novalidate>
+      <h2 id="aircraft-dialog-title">Edit aircraft</h2>
+      <p id="aircraft-completeness" class="editor-help"></p>
+      <p id="aircraft-envelope" class="editor-help"></p>
+      <div id="aircraft-errors" class="editor-errors" role="alert" hidden></div>
+      <div id="aircraft-fields" class="editor-grid"></div>
+      <p id="aircraft-identity" class="editor-help aircraft-identity"></p>
+      <div class="editor-actions">
+        <button id="saveAircraftBtn" class="primary-btn" type="submit">Save aircraft</button>
+        <button id="cancelAircraftBtn" class="secondary-btn" type="button">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <form method="dialog">
+      <h2 id="confirm-title">Keep your changes?</h2>
+      <p id="confirm-message"></p>
+      <div class="editor-actions">
+        <button class="secondary-btn" value="cancel" autofocus>Keep changes</button>
+        <button class="primary-btn" value="accept">Continue</button>
+      </div>
+    </form>
+  </dialog>
   <script type="module" src="main.js"></script>
 </body>
 

@@ -3,7 +3,7 @@ import { mapColor, nmToPx, normalizeHeading, normalizeTheme, setAttributes, svgE
 const LINE_PATTERNS = new Set(["solid", "dashed", "dotted", "hashed"]);
 const POINT_SHAPES = new Set(["circle", "square", "triangle", "diamond", "cross"]);
 
-const DEFAULT_STYLE = Object.freeze({
+export const DEFAULT_STYLE = Object.freeze({
   color: "#5b9bb3",
   opacity: 0.5,
   width: 1,
@@ -72,7 +72,7 @@ function tokenize(line, sourceName, lineNumber) {
 
 function numberValue(value, name, sourceName, lineNumber) {
   const parsed = Number(value);
-  if (!Number.isFinite(parsed)) {
+  if (String(value).trim() === "" || !Number.isFinite(parsed)) {
     throw new MapSyntaxError(sourceName, lineNumber, `${name} must be a finite number`);
   }
   return parsed;
@@ -100,6 +100,7 @@ function booleanValue(value, sourceName, lineNumber) {
 
 function styleOptions(tokens, sourceName, lineNumber) {
   const options = {};
+  const seen = new Set();
   for (const token of tokens) {
     const separator = token.indexOf("=");
     if (separator <= 0) {
@@ -108,12 +109,16 @@ function styleOptions(tokens, sourceName, lineNumber) {
 
     const key = token.slice(0, separator).toLowerCase();
     const value = token.slice(separator + 1);
-    if (Object.hasOwn(options, key)) {
+    if (seen.has(key)) {
       throw new MapSyntaxError(sourceName, lineNumber, `duplicate option "${key}"`);
     }
+    seen.add(key);
 
     if (key === "color") {
       if (!value) throw new MapSyntaxError(sourceName, lineNumber, "color cannot be empty");
+      if (globalThis.CSS?.supports && !CSS.supports("color", value)) {
+        throw new MapSyntaxError(sourceName, lineNumber, `invalid colour "${value}"`);
+      }
       options.color = value;
     } else if (key === "opacity") {
       options.opacity = opacityValue(value, sourceName, lineNumber);
@@ -162,6 +167,7 @@ function clockwiseSweep(startBearing, endBearing) {
 
 export function parseMap(source, sourceName = "<map>") {
   const document = { name: null, widthNm: null, heightNm: null, layers: [] };
+  const comments = [];
   const layers = new Map();
   let currentLayer = null;
 
@@ -179,13 +185,14 @@ export function parseMap(source, sourceName = "<map>") {
   lines.forEach((rawLine, index) => {
     const lineNumber = index + 1;
     const line = rawLine.trim();
-    if (!line || line.startsWith("#") || line.startsWith("//")) return;
+    if (!line) return;
+    if (line.startsWith("#") || line.startsWith("//")) { comments.push(rawLine); return; }
 
     const [rawCommand, ...tokens] = tokenize(line, sourceName, lineNumber);
     const command = rawCommand.toUpperCase();
 
     if (command === "MAP") {
-      if (!tokens.length) throw new MapSyntaxError(sourceName, lineNumber, "MAP requires a name");
+      if (!tokens.length || !tokens.join(" ").trim()) throw new MapSyntaxError(sourceName, lineNumber, "MAP requires a name");
       if (document.name !== null) throw new MapSyntaxError(sourceName, lineNumber, "MAP may only appear once");
       document.name = tokens.join(" ");
       return;
@@ -247,15 +254,13 @@ export function parseMap(source, sourceName = "<map>") {
 
   if (document.name === null) throw new MapSyntaxError(sourceName, 1, "missing MAP declaration");
   if (document.widthNm === null) throw new MapSyntaxError(sourceName, 1, "missing SIZE declaration");
-  if (!document.layers.some(layer => layer.features.length)) {
-    throw new MapSyntaxError(sourceName, 1, "map contains no drawable features");
-  }
 
   return {
     name: document.name,
     widthNm: document.widthNm,
     heightNm: document.heightNm,
-    layers: document.layers.map(({ name, features }) => ({ name, features })),
+    layers: document.layers,
+    comments,
     sources: [sourceName],
   };
 }
@@ -281,11 +286,12 @@ export function mergeMaps(documents) {
     }
     for (const layer of document.layers) {
       if (!byName.has(layer.name)) {
-        const mergedLayer = { name: layer.name, features: [] };
+        const mergedLayer = { name: layer.name, defaults: { ...layer.defaults }, features: [] };
         byName.set(layer.name, mergedLayer);
         layers.push(mergedLayer);
       }
       byName.get(layer.name).features.push(...layer.features);
+      Object.assign(byName.get(layer.name).defaults, layer.defaults);
     }
   }
 
@@ -295,6 +301,7 @@ export function mergeMaps(documents) {
     heightNm: base.heightNm,
     layers,
     sources: [base, ...overlays].flatMap(document => document.sources ?? []),
+    comments: documents.flatMap(document => document.comments ?? []),
   };
 }
 

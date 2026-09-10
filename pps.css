@@ -194,3 +194,12 @@
   fill: var(--muted);
   font: 11px "SFMono-Regular", Consolas, monospace;
 }
+#edit-layer, #edit-layer * { pointer-events: none; }
+.measurement-line, .measurement-arc { stroke: var(--cyan); stroke-width: 1.8; fill: none; }
+.measurement-point, .map-placement-anchor { fill: var(--radar); stroke: var(--cyan); stroke-width: 2; }
+.measurement-label { fill: var(--cyan); font: 13px "SFMono-Regular", Consolas, monospace; paint-order: stroke; stroke: var(--radar); stroke-width: 5; stroke-linejoin: round; }
+.measurement-preview .measurement-line, .measurement-preview .measurement-arc { stroke-dasharray: 5 4; }
+.draft-aircraft { fill: var(--radar); stroke: var(--amber); stroke-width: 2; stroke-dasharray: 3 2; }
+.pps.incomplete .target-symbol { stroke-dasharray: 2 2; }
+#radar-svg.placing { cursor: crosshair; }
+#radar-svg.panning { cursor: grabbing; }

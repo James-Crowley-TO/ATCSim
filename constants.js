@@ -1,18 +1,3 @@
-// The answer is a set of aircraft, even when one aircraft appears in several pairs.
-export function evaluateWarnings(scenario, warningIds = new Set()) {
-  const required = new Map();
-  for (const { aircraftA, aircraftB } of scenario.conflicts) {
-    required.set(aircraftA.id, aircraftA);
-    required.set(aircraftB.id, aircraftB);
-  }
-  const missingAircraft = [...required.values()].filter(aircraft => !warningIds.has(aircraft.id));
-  return {
-    passed: missingAircraft.length === 0,
-    requiredCount: required.size,
-    markedCount: required.size - missingAircraft.length,
-    missingAircraft,
-  };
-}
 // Shared configuration for the ATC problem-solving trainer.
 
 export const NM_PER_PIXEL = 0.1;
