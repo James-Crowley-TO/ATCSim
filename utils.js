@@ -280,7 +280,7 @@ export function utcTime(startUtcSeconds = 0, minutesFromStart = 0) {
 
 // Theme helpers live here so the application remains self-contained when the
 // core files are copied individually.
-export const THEMES = Object.freeze(["blue", "black", "light"]);
+export const THEMES = Object.freeze(["blue", "black", "light", "dusk", "chart"]);
 export const THEME_STORAGE_KEY = "atc-trainer-theme";
 
 export function normalizeTheme(theme) {

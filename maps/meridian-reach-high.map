@@ -1,0 +1,116 @@
+# Fictional large regional en-route map. Coordinates and radii are NM.
+# Upper-left origin; x increases right, y increases down.
+# The full extent is 900 x 720 NM, with no geometry outside the map.
+# Meridian rings: 10 NM intervals to 50 NM, then 100 and 150 NM.
+# Other airport rings: 10, 20 and 30 NM.
+
+MAP "Meridian Reach High"
+SIZE 900 720
+
+# Nine broad sectors. All internal boundaries meet at shared vertices.
+LAYER sectors
+STYLE color="#FFC000" opacity=0.66 width=1.5 pattern="solid"
+LINE 0 190 180 160
+LINE 180 160 330 240
+LINE 330 240 590 220
+LINE 590 220 720 300
+LINE 720 300 900 270
+LINE 180 160 220 0
+LINE 590 220 560 0
+LINE 0 480 240 450
+LINE 240 450 480 510
+LINE 480 510 720 460
+LINE 720 460 900 540
+LINE 330 240 300 350
+LINE 300 350 240 450
+LINE 720 300 690 380
+LINE 690 380 720 460
+LINE 240 450 300 720
+LINE 720 460 660 720
+
+# Two very faint long-range references around Meridian.
+LAYER regional-reference
+STYLE color="#d7e4e6" opacity=0.13 width=0.7 pattern="dotted"
+CIRCLE 430 365 100
+CIRCLE 430 365 150
+
+# Local rings remain useful when zooming into individual airports.
+LAYER range-rings
+STYLE color="#d7e4e6" opacity=0.28 width=0.7 pattern="dotted"
+CIRCLE 430 365 10
+CIRCLE 430 365 20
+CIRCLE 430 365 30
+CIRCLE 430 365 40
+CIRCLE 430 365 50
+CIRCLE 165 225 10
+CIRCLE 165 225 20
+CIRCLE 165 225 30
+CIRCLE 285 545 10
+CIRCLE 285 545 20
+CIRCLE 285 545 30
+CIRCLE 700 180 10
+CIRCLE 700 180 20
+CIRCLE 700 180 30
+CIRCLE 750 530 10
+CIRCLE 750 530 20
+CIRCLE 750 530 30
+CIRCLE 555 600 10
+CIRCLE 555 600 20
+CIRCLE 555 600 30
+
+# A west-east trunk with northwest-southeast and north-south corridors.
+# Crossings are explicit shared fixes; none pass through an airport marker.
+LAYER airways
+STYLE color="#75a9ba" opacity=0.30 width=1 pattern="solid"
+LINE 35 330 190 310
+LINE 190 310 380 320
+LINE 380 320 570 345
+LINE 570 345 730 360
+LINE 730 360 800 335
+LINE 80 75 215 185
+LINE 215 185 380 320
+LINE 380 320 510 425
+LINE 510 425 650 535
+LINE 650 535 840 665
+LINE 650 45 605 175
+LINE 605 175 570 345
+LINE 570 345 510 425
+LINE 510 425 455 570
+LINE 455 570 415 680
+
+# One remote special-use area, away from the main corridors.
+LAYER special-use
+STYLE color="#d6a65b" opacity=0.35 width=1 pattern="hashed" hash-spacing=16 hash-length=5
+CIRCLE 105 615 40
+
+# Sparse labels: corridor entries and shared junctions only.
+LAYER fixes
+STYLE color="#9ad9e8" opacity=0.75 width=1.1 shape="triangle" size=4 filled=false label=""
+POINT 35 330 label="WESTGATE"
+POINT 190 310
+POINT 380 320 shape="diamond" size=5 label="REACH"
+POINT 570 345 shape="diamond" size=5 label="CEDAR"
+POINT 730 360
+POINT 800 335 label="EASTGATE"
+POINT 80 75 label="FROST"
+POINT 215 185
+POINT 510 425 shape="diamond" size=5 label="VALE"
+POINT 650 535
+POINT 840 665 label="MARSH"
+POINT 650 45 label="NORTHGATE"
+POINT 605 175
+POINT 455 570
+POINT 415 680 label="SOUTHGATE"
+
+LAYER special-use-label
+STYLE color="#d6a65b" opacity=0.66 width=1 shape="cross" size=4 filled=false label=""
+POINT 105 615 label="R-17"
+
+LAYER aerodromes
+STYLE color="#d7e4e6" opacity=0.94 width=1.2 shape="circle" size=3.5 filled=false label=""
+POINT 430 365 size=7 label="MERIDIAN"
+POINT 165 225 label="PINE COAST"
+POINT 285 545 label="SILVER BAY"
+POINT 700 180 label="NORTH HAVEN"
+POINT 750 530 label="REED PORT"
+POINT 555 600 label="LONG MEADOW"

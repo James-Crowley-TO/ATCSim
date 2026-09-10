@@ -8,7 +8,7 @@ https://james-crowley-to.github.io/ATCSim/
 
 ## Install and run
 
-Extract the complete bundle and run it from its `atc-sandbox` directory. When updating an existing checkout, copy **all** files in this directory, including the new JavaScript modules and the `maps/` directory. Preserve any additional custom maps you already have.
+Extract the complete bundle and run it from its directory. When updating an existing checkout, copy **all** files in this directory, including the new JavaScript modules and the `maps/` directory. Preserve any additional custom maps you already have.
 
 With Node.js:
 
@@ -121,21 +121,6 @@ Coordinates and radii are in NM; origin is the upper-left corner, with X increas
 ## Implementation and files
 
 `Session` is the authoritative aircraft/scenario state. Editing existing aircraft mutates the shared object only after validation, so tool references, tags and strips cannot fork into independent aircraft copies. The radar owns one set of navigation handlers and dispatches clicks to the active mode. Switching modes cancels pointer capture and pending tools without calling scenario regeneration or camera reset.
-
-New modules:
-
-- `session.js`: session, mode, aircraft identity and explicit answer recalculation.
-- `sandbox.js`: world-anchored measurements and placement previews.
-- `aircraft-editor.js`: draft editing and Save/Cancel lifecycle.
-- `map-editor.js`: placement, selection, inspector and atomic file load/save.
-- `map-document.js`: DSL serialization, placement geometry and camera-aware hit testing.
-- `editor-ui.js`, `confirm-dialog.js`: labelled fields, errors and themed confirmations.
-- `dev-server.js`: optional dependency-free local server.
-- `tests/`: model, geometry, serialization and controller regression tests.
-
-Changed existing files: `aircraft.js`, `assessment.js`, `constants.js`, `index.html`, `main.js`, `map.js`, `package.json`, `pps.css`, `radar.js`, `README.md`, `style.css`, `tools.js`, and `ui.js`.
-
-The supplied `assessment.js` contained test code. It is restored as the intended production assessment module, shared by `ui.js`; the stray assessment copy in `constants.js` is removed. The supplied `scenarios.js`, `camera.js`, `theme.js`, `utils.js`, and both map files otherwise remain unchanged.
 
 ## Tests and limits
 

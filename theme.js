@@ -1,4 +1,4 @@
-export const THEMES = Object.freeze(["blue", "black", "light"]);
+export const THEMES = Object.freeze(["blue", "black", "light", "dusk", "chart"]);
 export const THEME_STORAGE_KEY = "atc-trainer-theme";
 
 export function normalizeTheme(theme) {

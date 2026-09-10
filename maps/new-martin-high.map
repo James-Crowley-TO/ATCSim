@@ -1,76 +1,61 @@
-# Fictional high-level en-route map inspired by the density and hierarchy of
-# Great Lakes navigation charts. Coordinates and radii are nautical miles.
-# Major high-altitude sector boundaries.
-# MI
-# SH
-# XI
-# PI
-# BA
-# LU
-# Minor high-altitude sector boundaries.
-# New Martin range rings: five dashed rings at 10 NM intervals.
-# Minor-airport range rings: three dotted rings at 10 NM intervals.
-# West Bay
-# West Harbour
-# North Point
-# South Field
-# Aerodromes and sector labels use distinct symbols.
+# Fictional high-level en-route map 
+
 MAP "New Martin High"
 SIZE 170 150
 
 LAYER sectors
 STYLE color="#FFC000" opacity=0.72 width=1.5 pattern="dashed" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 0 57 31 31 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 31 31 75 45 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 75 45 110 135 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 110 135 145 154 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 145 154 143 180 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 143 180 138 190 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 138 190 75 200 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 75 200 62 198 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 62 198 10 186 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 31 31 0 0 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 75 45 100 20 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 100 20 250 0 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 145 154 170 134 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 170 134 218 126 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 218 126 270 124 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 138 190 175 200 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 175 200 195 250 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 195 250 235 260 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 175 200 245 190 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 245 190 265 183 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 75 200 72 234 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 72 234 60 256 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 60 256 65 289 color="#FFC000" opacity=0.72 width=1.5 pattern="solid" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 110 135 82 148 color="#FFC000" opacity=0.72 width=1.5 pattern="dashed" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 82 148 62 198 color="#FFC000" opacity=0.72 width=1.5 pattern="dashed" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-LINE 175 200 218 126 color="#FFC000" opacity=0.72 width=1.5 pattern="dashed" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
+LINE 0 57 31 31 pattern="solid"
+LINE 31 31 75 45 pattern="solid"
+LINE 75 45 110 135 pattern="solid"
+LINE 110 135 145 154 pattern="solid"
+LINE 145 154 143 180 pattern="solid"
+LINE 143 180 138 190 pattern="solid"
+LINE 138 190 75 200 pattern="solid"
+LINE 75 200 62 198 pattern="solid"
+LINE 62 198 10 186 pattern="solid"
+LINE 31 31 0 0 pattern="solid"
+LINE 75 45 100 20 pattern="solid"
+LINE 100 20 250 0 pattern="solid"
+LINE 145 154 170 134 pattern="solid"
+LINE 170 134 218 126 pattern="solid"
+LINE 218 126 270 124 pattern="solid"
+LINE 138 190 175 200 pattern="solid"
+LINE 175 200 195 250 pattern="solid"
+LINE 195 250 235 260 pattern="solid"
+LINE 175 200 245 190 pattern="solid"
+LINE 245 190 265 183 pattern="solid"
+LINE 75 200 72 234 pattern="solid"
+LINE 72 234 60 256 pattern="solid"
+LINE 60 256 65 289 pattern="solid"
+LINE 110 135 82 148 
+LINE 82 148 62 198 
+LINE 175 200 218 126
 
 LAYER range-rings
-STYLE color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 138 131 10 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 138 131 20 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 138 131 30 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 138 131 40 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 138 131 50 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 29 142 10 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 29 142 20 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 29 142 30 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 59 128 10 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 59 128 20 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 59 128 30 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 137 66 10 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 137 66 20 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 137 66 30 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 216 231 10 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 216 231 20 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-CIRCLE 216 231 30 color="#d7e4e6" opacity=0.2 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
+STYLE color="#d7e4e6" opacity=0.5 width=0.7 pattern="dotted" shape="circle" size=4 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
+CIRCLE 138 131 10 
+CIRCLE 138 131 20 
+CIRCLE 138 131 30 
+CIRCLE 138 131 40 
+CIRCLE 138 131 50 
+CIRCLE 29 142 10 
+CIRCLE 29 142 20 
+CIRCLE 29 142 30 
+CIRCLE 59 128 10 
+CIRCLE 59 128 20 
+CIRCLE 59 128 30 
+CIRCLE 137 66 10 
+CIRCLE 137 66 20 
+CIRCLE 137 66 30 
+CIRCLE 216 231 10 
+CIRCLE 216 231 20 
+CIRCLE 216 231 30 
 
 LAYER aerodromes
 STYLE color="#d7e4e6" opacity=0.95 width=1.2 pattern="solid" shape="circle" size=3 rotation=0 filled=false label="" hash-spacing=16 hash-length=6
-POINT 138 131 color="#d7e4e6" opacity=0.95 width=1.2 pattern="solid" shape="circle" size=7 rotation=0 filled=false label="NEW MARTIN" hash-spacing=16 hash-length=6
-POINT 29 142 color="#d7e4e6" opacity=0.95 width=1.2 pattern="solid" shape="circle" size=3 rotation=0 filled=false label="CROW ISLAND" hash-spacing=16 hash-length=6
-POINT 59 128 color="#d7e4e6" opacity=0.95 width=1.2 pattern="solid" shape="circle" size=3 rotation=0 filled=false label="BAGEL BAY" hash-spacing=16 hash-length=6
-POINT 137 66 color="#d7e4e6" opacity=0.95 width=1.2 pattern="solid" shape="circle" size=3 rotation=0 filled=false label="ACORN HILL" hash-spacing=16 hash-length=6
-POINT 216 231 color="#d7e4e6" opacity=0.95 width=1.2 pattern="solid" shape="circle" size=3 rotation=0 filled=false label="GHOST FIELD" hash-spacing=16 hash-length=6
+POINT 138 131 size=7 label="NEW MARTIN"
+POINT 29 142 label="CROW ISLAND"
+POINT 59 128 label="BAGEL BAY" 
+POINT 137 66 label="ACORN HILL"
+POINT 216 231 label="GHOST FIELD"

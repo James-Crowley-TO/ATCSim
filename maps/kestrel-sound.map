@@ -1,0 +1,51 @@
+# Fictional compact en-route sector. All coordinates and radii are NM.
+# Upper-left origin; x increases right, y increases down.
+# Main airport range rings: 10 and 20 NM.
+
+MAP "Kestrel Sound"
+SIZE 60 60
+
+# Three sectors with an offset junction, leaving the airway crossing clear.
+LAYER sectors
+STYLE color="#FFC000" opacity=0.62 width=1.4 pattern="solid"
+LINE 0 22 16 18
+LINE 16 18 36 22
+LINE 36 22 40 44
+LINE 40 44 60 48
+LINE 36 22 42 0
+
+# Quiet reference rings around Kestrel.
+LAYER range-rings
+STYLE color="#d7e4e6" opacity=0.25 width=0.7 pattern="dotted"
+CIRCLE 30 36 10
+CIRCLE 30 36 20
+
+# Two continuous corridors meet at SOUND, north of the main airport.
+LAYER airways
+STYLE color="#75a9ba" opacity=0.32 width=0.9 pattern="solid"
+LINE 8 48 20 38
+LINE 20 38 32 28
+LINE 32 28 45 19
+LINE 45 19 54 10
+LINE 6 11 18 19
+LINE 18 19 32 28
+LINE 32 28 44 39
+LINE 44 39 55 53
+
+# Only corridor entries and the central crossing carry fix labels.
+LAYER fixes
+STYLE color="#9ad9e8" opacity=0.78 width=1.1 shape="triangle" size=4 filled=false label=""
+POINT 8 48 label="WILLOW"
+POINT 20 38
+POINT 32 28 shape="diamond" size=5 label="SOUND"
+POINT 45 19
+POINT 54 10 label="TERN"
+POINT 6 11 label="ALDER"
+POINT 18 19
+POINT 44 39
+POINT 55 53 label="SHORE"
+
+LAYER aerodromes
+STYLE color="#d7e4e6" opacity=0.94 width=1.2 shape="circle" size=3.5 filled=false label=""
+POINT 30 36 size=6 label="KESTREL"
+POINT 13 14 label="GULL COVE"

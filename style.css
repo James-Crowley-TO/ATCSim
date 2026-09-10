@@ -155,6 +155,124 @@
     --missed-bg: #fff3de;
 }
 
+:root[data-theme="dusk"] {
+    color-scheme: dark;
+
+    --bg: #151719;
+    --panel: #1c1f22;
+    --panel-2: #25292d;
+    --radar: #181c20;
+    --radar-grid: rgba(161, 179, 190, .09);
+    --border: #414950;
+    --text: #e2e5e7;
+    --muted: #a4afb7;
+
+    --cyan: #89cddd;
+    --cyan-dim: #294650;
+    --amber: #dfbd73;
+    --rbl: #8bc99c;
+    --ptl: #ded184;
+    --halo: #cc9dcc;
+    --piv: #e5a57e;
+    --clearance: #c6b0ed;
+    --danger: #e78289;
+
+    --shadow: rgba(0, 0, 0, .30);
+    --primary-border: #689eab;
+    --primary-text: #e2edf0;
+    --tool-active-text: #142019;
+    --danger-text: #f0a2a7;
+    --danger-border: #885158;
+    --solution-bg: #20262a;
+    --radar-border: #414b53;
+
+    --leader: rgba(137, 205, 221, .55);
+    --target-hover: #fff0cd;
+    --tag-bg: rgba(24, 28, 32, .93);
+    --tag-border: rgba(137, 205, 221, .30);
+    --tag-text: #c6e3ea;
+    --scale-bg: rgba(24, 28, 32, .94);
+
+    --strip-bay-bg: #191c1f;
+    --strip-bay-border: #454d54;
+    --clock-bg: #202428;
+    --strip-bg: #2b3136;
+    --strip-alternate: #323940;
+    --strip-hover: #404b53;
+    --strip-text: #e6eaed;
+    --strip-muted: #b2bec7;
+    --strip-border: #505d67;
+    --strip-edge: #7c919e;
+    --strip-clearance: #d0b8f4;
+
+    --warning: #ff939c;
+    --warning-border: #ed7e89;
+    --warning-glow: rgba(237, 126, 137, .20);
+    --success: #a0d9b1;
+    --success-bg: #263b30;
+    --missed: #ebbd88;
+    --missed-bg: #3d3225;
+}
+
+:root[data-theme="chart"] {
+    color-scheme: light;
+
+    --bg: #e9e5dc;
+    --panel: #f8f5ee;
+    --panel-2: #efeae0;
+    --radar: #f5f2e9;
+    --radar-grid: rgba(77, 91, 95, .11);
+    --border: #b9b5a9;
+    --text: #29343a;
+    --muted: #626b6c;
+
+    --cyan: #246477;
+    --cyan-dim: #d9e6e6;
+    --amber: #805d13;
+    --rbl: #316d4b;
+    --ptl: #796515;
+    --halo: #894881;
+    --piv: #a04e28;
+    --clearance: #714795;
+    --danger: #ae3040;
+
+    --shadow: rgba(55, 48, 34, .13);
+    --primary-border: #658d97;
+    --primary-text: #234e5c;
+    --tool-active-text: #fffdf6;
+    --danger-text: #a12b3a;
+    --danger-border: #c49596;
+    --solution-bg: #faf7ef;
+    --radar-border: #aaaFA6;
+
+    --leader: rgba(36, 100, 119, .62);
+    --target-hover: #142e39;
+    --tag-bg: rgba(250, 247, 239, .96);
+    --tag-border: rgba(36, 100, 119, .35);
+    --tag-text: #284c59;
+    --scale-bg: rgba(245, 242, 233, .96);
+
+    --strip-bay-bg: #ded9ce;
+    --strip-bay-border: #b4ad9e;
+    --clock-bg: #f4f0e6;
+    --strip-bg: #fffbef;
+    --strip-alternate: #f0e9d8;
+    --strip-hover: #e1e9e4;
+    --strip-text: #29343a;
+    --strip-muted: #62665f;
+    --strip-border: #bdb5a3;
+    --strip-edge: #8c8c79;
+    --strip-clearance: #714795;
+
+    --warning: #b02437;
+    --warning-border: #bd3445;
+    --warning-glow: rgba(189, 52, 69, .17);
+    --success: #306744;
+    --success-bg: #e1ecdf;
+    --missed: #80501b;
+    --missed-bg: #f3e5c9;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -700,63 +818,315 @@ button:hover {
         font-size: 9px;
     }
 }
+
 /* Sandbox Update: extend the existing theme tokens across every editor. */
-[hidden] { display: none !important; }
-input { font: inherit; color: var(--text); background: var(--panel-2); border: 1px solid var(--border); border-radius: 5px; min-width: 0; }
-input:focus-visible, summary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-input[readonly] { background: var(--panel); color: var(--muted); }
-input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--danger-text); }
-button:disabled { opacity: .5; cursor: default; filter: none; }
-.mode-switch { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 14px; }
-.mode-btn { padding: 9px 13px; min-height: 40px; font-size: .875rem; }
-.mode-btn.active { color: var(--primary-text); background: var(--cyan-dim); border-color: var(--cyan); }
-#mode-help { color: var(--muted); font-size: .875rem; margin-left: auto; }
-.session-notice { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 12px; color: var(--missed); background: var(--missed-bg); border: 1px solid var(--border); border-radius: 8px; font-size: .875rem; }
-.session-notice button { flex-shrink: 0; }
+[hidden] {
+    display: none !important;
+}
+
+input {
+    font: inherit;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    min-width: 0;
+}
+
+input:focus-visible,
+summary:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+}
+
+input[readonly] {
+    background: var(--panel);
+    color: var(--muted);
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"] {
+    border-color: var(--danger-text);
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: default;
+    filter: none;
+}
+
+.mode-switch {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0 0 14px;
+}
+
+.mode-btn {
+    padding: 9px 13px;
+    min-height: 40px;
+    font-size: .875rem;
+}
+
+.mode-btn.active {
+    color: var(--primary-text);
+    background: var(--cyan-dim);
+    border-color: var(--cyan);
+}
+
+#mode-help {
+    color: var(--muted);
+    font-size: .875rem;
+    margin-left: auto;
+}
+
+.session-notice {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    color: var(--missed);
+    background: var(--missed-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: .875rem;
+}
+
+.session-notice button {
+    flex-shrink: 0;
+}
+
 body[data-mode="mapmaker"] .scenario-only,
 body[data-mode="mapmaker"] .briefing,
 body[data-mode="mapmaker"] #solution-panel,
 body[data-mode="mapmaker"] .session-notice,
-body[data-mode="mapmaker"] .strip-bay { display: none !important; }
-#sandbox-toolbar .tool-btn, #map-toolbar .tool-btn { font-size: .875rem; justify-content: center; min-height: 38px; }
-#sandbox-toolbar .tool-help, #map-toolbar .tool-help { font-size: .8125rem; line-height: 1.5; }
-#map-toolbar .tool-section, #sandbox-toolbar .tool-section { gap: 6px; }
-#map-toolbar .active, #sandbox-toolbar .active { background: var(--cyan-dim); color: var(--text); border-color: var(--cyan); }
-#map-save-status { color: var(--cyan); }
-.map-inspector { min-width: 0; padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); max-height: 80vh; overflow: auto; }
-.map-inspector h2 { font-size: 1.125rem; margin: 0 0 14px; }
-.map-inspector h3 { font-size: 1rem; margin: 16px 0 8px; }
-.map-inspector details { padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
-.map-inspector summary { cursor: pointer; font-size: .875rem; }
-.map-inspector > p { font-size: .875rem; line-height: 1.5; color: var(--muted); }
-.editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.editor-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; margin: 8px 0; }
-.editor-field span { font-size: .875rem; color: var(--muted); line-height: 1.4; }
-.editor-field input, .editor-field select { width: 100%; min-height: 38px; padding: 7px; font-size: .875rem; }
-.editor-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-.editor-errors { border: 1px solid var(--danger-text); color: var(--danger-text); background: var(--panel); border-radius: 5px; padding: 9px; margin: 10px 0; font-size: .875rem; overflow-wrap: anywhere; }
-.editor-errors p { margin: 3px 0; }
-.layer-create { display: flex; align-items: end; gap: 8px; }
-.layer-create .editor-field { flex: 1; }
-.layer-create button { margin-bottom: 8px; }
-#aircraft-dialog { color: var(--text); background: var(--panel); border: 1px solid var(--cyan); border-radius: 10px; width: min(650px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); padding: 24px; box-shadow: 0 20px 80px var(--shadow); }
-#aircraft-dialog::backdrop { background: rgba(0, 0, 0, .6); }
-#aircraft-dialog h2 { margin-top: 0; font-size: 1.4rem; }
-.editor-help { color: var(--muted); font-size: .875rem; line-height: 1.5; }
-.aircraft-identity { font-size: .75rem; overflow-wrap: anywhere; }
-.tool-status { font-size: .875rem; }
+body[data-mode="mapmaker"] .strip-bay {
+    display: none !important;
+}
+
+#sandbox-toolbar .tool-btn,
+#map-toolbar .tool-btn {
+    font-size: .875rem;
+    justify-content: center;
+    min-height: 38px;
+}
+
+#sandbox-toolbar .tool-help,
+#map-toolbar .tool-help {
+    font-size: .8125rem;
+    line-height: 1.5;
+}
+
+#map-toolbar .tool-section,
+#sandbox-toolbar .tool-section {
+    gap: 6px;
+}
+
+#map-toolbar .active,
+#sandbox-toolbar .active {
+    background: var(--cyan-dim);
+    color: var(--text);
+    border-color: var(--cyan);
+}
+
+#map-save-status {
+    color: var(--cyan);
+}
+
+.map-inspector {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+    max-height: 80vh;
+    overflow: auto;
+}
+
+.map-inspector h2 {
+    font-size: 1.125rem;
+    margin: 0 0 14px;
+}
+
+.map-inspector h3 {
+    font-size: 1rem;
+    margin: 16px 0 8px;
+}
+
+.map-inspector details {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+}
+
+.map-inspector summary {
+    cursor: pointer;
+    font-size: .875rem;
+}
+
+.map-inspector>p {
+    font-size: .875rem;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.editor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.editor-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    margin: 8px 0;
+}
+
+.editor-field span {
+    font-size: .875rem;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.editor-field input,
+.editor-field select {
+    width: 100%;
+    min-height: 38px;
+    padding: 7px;
+    font-size: .875rem;
+}
+
+.editor-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.editor-errors {
+    border: 1px solid var(--danger-text);
+    color: var(--danger-text);
+    background: var(--panel);
+    border-radius: 5px;
+    padding: 9px;
+    margin: 10px 0;
+    font-size: .875rem;
+    overflow-wrap: anywhere;
+}
+
+.editor-errors p {
+    margin: 3px 0;
+}
+
+.layer-create {
+    display: flex;
+    align-items: end;
+    gap: 8px;
+}
+
+.layer-create .editor-field {
+    flex: 1;
+}
+
+.layer-create button {
+    margin-bottom: 8px;
+}
+
+#aircraft-dialog {
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--cyan);
+    border-radius: 10px;
+    width: min(650px, calc(100vw - 24px));
+    max-height: calc(100dvh - 32px);
+    padding: 24px;
+    box-shadow: 0 20px 80px var(--shadow);
+}
+
+#aircraft-dialog::backdrop {
+    background: rgba(0, 0, 0, .6);
+}
+
+#aircraft-dialog h2 {
+    margin-top: 0;
+    font-size: 1.4rem;
+}
+
+.editor-help {
+    color: var(--muted);
+    font-size: .875rem;
+    line-height: 1.5;
+}
+
+.aircraft-identity {
+    font-size: .75rem;
+    overflow-wrap: anywhere;
+}
+
+.tool-status {
+    font-size: .875rem;
+}
+
 @media (max-width: 1080px) {
-  #map-toolbar, #sandbox-toolbar { flex-wrap: wrap; }
-  #map-toolbar .tool-section, #sandbox-toolbar .tool-section { grid-template-columns: repeat(3, auto); }
+
+    #map-toolbar,
+    #sandbox-toolbar {
+        flex-wrap: wrap;
+    }
+
+    #map-toolbar .tool-section,
+    #sandbox-toolbar .tool-section {
+        grid-template-columns: repeat(3, auto);
+    }
 }
+
 @media (max-width: 700px) {
-  #mode-help { margin: 0; width: 100%; }
-  .session-notice { flex-wrap: wrap; }
-  .map-inspector { max-height: none; }
-  #aircraft-dialog { padding: 16px; }
+    #mode-help {
+        margin: 0;
+        width: 100%;
+    }
+
+    .session-notice {
+        flex-wrap: wrap;
+    }
+
+    .map-inspector {
+        max-height: none;
+    }
+
+    #aircraft-dialog {
+        padding: 16px;
+    }
 }
-@media (max-width: 400px) { #aircraft-dialog .editor-grid { grid-template-columns: 1fr; } }
-#confirm-dialog { color: var(--text); background: var(--panel); border: 1px solid var(--cyan); border-radius: 10px; width: min(500px, calc(100vw - 24px)); padding: 24px; }
-#confirm-dialog::backdrop { background: rgba(0,0,0,.6); }
-#confirm-dialog h2 { margin-top: 0; font-size: 1.2rem; }
-#confirm-dialog p { line-height: 1.5; }
+
+@media (max-width: 400px) {
+    #aircraft-dialog .editor-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+#confirm-dialog {
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--cyan);
+    border-radius: 10px;
+    width: min(500px, calc(100vw - 24px));
+    padding: 24px;
+}
+
+#confirm-dialog::backdrop {
+    background: rgba(0, 0, 0, .6);
+}
+
+#confirm-dialog h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+}
+
+#confirm-dialog p {
+    line-height: 1.5;
+}
