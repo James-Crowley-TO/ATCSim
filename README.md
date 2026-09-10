@@ -2,6 +2,10 @@
 
 A dependency-free extension of the supplied JavaScript/SVG application. Normal Mode, Sandbox Mode and Map-Maker share the existing camera, aircraft objects, themes, map DSL and renderer.
 
+## Run Online
+
+https://james-crowley-to.github.io/ATCSim/
+
 ## Install and run
 
 Extract the complete bundle and run it from its `atc-sandbox` directory. When updating an existing checkout, copy **all** files in this directory, including the new JavaScript modules and the `maps/` directory. Preserve any additional custom maps you already have.
@@ -128,7 +132,6 @@ New modules:
 - `editor-ui.js`, `confirm-dialog.js`: labelled fields, errors and themed confirmations.
 - `dev-server.js`: optional dependency-free local server.
 - `tests/`: model, geometry, serialization and controller regression tests.
-- `VERIFICATION.md`: results and testing limitations.
 
 Changed existing files: `aircraft.js`, `assessment.js`, `constants.js`, `index.html`, `main.js`, `map.js`, `package.json`, `pps.css`, `radar.js`, `README.md`, `style.css`, `tools.js`, and `ui.js`.
 
@@ -136,6 +139,6 @@ The supplied `assessment.js` contained test code. It is restored as the intended
 
 ## Tests and limits
 
-Run `npm test`, or `node --test tests/*.test.js`. See `VERIFICATION.md` for the 22 passing tests and browser observations.
+Run `npm test`, or `node --test tests/*.test.js`. 
 
 Blue, Black and Light use the existing theme tokens; new controls, errors, confirmations and measurements follow them. Aircraft and map edits persist for the current session only, as requested. The existing sampled conflict model, aircraft envelopes, camera zoom bounds and static scenario semantics remain in place. This update does not add physics, live motion or a new scenario catalogue.
